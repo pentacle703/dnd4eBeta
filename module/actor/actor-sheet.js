@@ -119,7 +119,7 @@ export default class ActorSheet4e extends ActorSheet {
 		// sheetData.config = CONFIG.DND4EBETA;
 		actorData.size = DND4EBETA.actorSizes;
 		for ( let [s, skl] of Object.entries(actorData.skills)) {
-			skl.ability = actorData.abilities[skl.ability].label.substring(0, 3).toLowerCase();
+			skl.ability = actorData.abilities[skl.ability];//.label.substring(0, 3).toLowerCase(); <- the sub is useless, as skl.ability is already the shorthand, and pose problem because label is languade dependant
 			skl.icon = this._getTrainingIcon(skl.value);
 			skl.hover = game.i18n.localize(DND4EBETA.trainingLevels[skl.value]);
 			skl.label = game.i18n.localize(DND4EBETA.skills[s]);

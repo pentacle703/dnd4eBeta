@@ -303,7 +303,26 @@ Hooks.once('init', async function() {
 		'dnd4e',
 		'Combat.prototype.nextTurn',
 		Turns._onNextTurn
-	)
+	);
+
+	Handlebars.registerHelper('each_skills', function(array, opts, test, test2){
+ 		var data ='';
+ 		if(opts.data)
+		    data  = Handlebars.createFrame(opts.data);
+	    array = Object.entries(array).sort(function([akey, avalue], [bkey, bvalue]) 
+	    {
+	        return  avalue.label.localeCompare(bvalue.label) ;
+	    });
+	    var ret = '';
+		for (var i = 0, j = array.length; i < j; i++) {
+		  	let [key, value] = array[i]
+		    if(data)
+		    	data.index = key
+		    ret = ret + opts.fn(value,{data : data, blockParams :[value, key]});
+		  }
+	    return ret;
+		}
+	);
 });
 
 Hooks.on("getSceneControlButtons", function(controls){

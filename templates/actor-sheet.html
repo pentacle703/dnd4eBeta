@@ -161,16 +161,15 @@
 			</section>
 			{{!-- Skills --}}
 			<section class="section section--skills">
-				{{#each system.skills as |skill s|}}
+				{{#each_skills system.skills as |skill s|}}
 				<div class="skill--block flexrow" data-skill="{{s}}">
 					<a class="training-toggle skill-training" title="{{skill.hover}}">{{{skill.icon}}}</a>
 					<h4 class="skill-name rollable">{{skill.label}}</h4>
 					<input type="hidden" name="system.skills.{{s}}.value" value="{{skill.value}}" data-dtype="Number">
 					<label class="skill-mod skill-bonus rollable">{{numberFormat skill.total decimals=0 sign=true }}</label>
 				</div>
-				{{/each}}
+				{{/each_skills}}
 			</section>
-
 			<a class="custom-roll-descriptions" style="font-size: 11.5px;" title="Change custom descriptions for Skill and Ability roll checks.">Edit Skill & Ability Custom Descriptions.</a>
 		</section>
 
