@@ -5,7 +5,7 @@ export default class HPOptions extends FormApplication {
 		return mergeObject(super.defaultOptions, {
 		id: "hp-options",
 		classes: ["dnd4eBeta"],
-		title: "Hit Points Options",
+		title: game.i18n.localize("DND4EBETA.HPOptions"),
 		template: "systems/dnd4e/templates/apps/hp-options.html",
 		width: 340,
 		height: "auto",

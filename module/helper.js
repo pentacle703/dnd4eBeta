@@ -755,10 +755,10 @@ export class Helper {
 		let tag = [];
 
 		if(['melee', 'meleeRanged', 'ranged'].includes(chatData.weaponType) ) {
-			tag.push(`Weapon`);
+			tag.push(game.i18n.localize("DND4EBETA.ItemTypeWeapon"));
 		} 
 		else if (chatData.weaponType === "implement") {
-			tag.push(`Implement`);
+			tag.push(game.i18n.localize("DND4EBETA.WeaponImplement"));
 		}
 
 		if (chatData.powersource && chatData.secondPowersource && chatData.secondPowersource != chatData.powersource){

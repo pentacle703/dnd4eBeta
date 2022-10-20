@@ -477,41 +477,42 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 			area = 0;
 		}
 
+		//Maybe this part can be automated
 		if(itemData.system.rangeType === "range") {
-			itemData.system.rangeText = `Ranged ${itemData.system.rangePower}`
-			itemData.system.rangeTextShort = `R`
-			itemData.system.rangeTextBlock = `${itemData.system.rangePower}`
+			itemData.system.rangeText = game.i18n.format('DND4EBETA.rangeRangedText',{range:itemData.system.rangePower});
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeRangedShort');
+			itemData.system.rangeTextBlock = `${itemData.system.rangePower}`;
 		} else if(itemData.system.rangeType === "closeBurst") {
-			itemData.system.rangeText = `Close Burst ${area}`
-			itemData.system.rangeTextShort = "C-BU"
-			itemData.system.rangeTextBlock = `${area}`
+			itemData.system.rangeText = game.i18n.format('DND4EBETA.rangeCloseBurstText',{area:area});
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeCloseBurstShort');
+			itemData.system.rangeTextBlock = `${area}`;
 		} else if(itemData.system.rangeType === "rangeBurst") {
-			itemData.system.rangeText = `Area Burst ${area} within ${itemData.system.rangePower}`
-			itemData.system.rangeTextShort = "A-BU"
-			itemData.system.rangeTextBlock = `${area} - ${itemData.system.rangePower}`
+			itemData.system.rangeText = game.i18n.localize('DND4EBETA.rangeBurstText',{area:area, range:itemData.system.rangePower});
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeBurstShort');
+			itemData.system.rangeTextBlock = `${area} - ${itemData.system.rangePower}`;
 		} else if(itemData.system.rangeType === "closeBlast") {
-			itemData.system.rangeText = `Close Blast ${area}`
-			itemData.system.rangeTextShort = "C-BL"
-			itemData.system.rangeTextBlock = `${area}`
+			itemData.system.rangeText = game.i18n.localize('DND4EBETA.rangeCloseBlastText',{area:area});
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeCloseBlastShort');
+			itemData.system.rangeTextBlock = `${area}`;;
 		} else if(itemData.system.rangeType === "rangeBlast") {
-			itemData.system.rangeText = `Area Blast ${area} within ${itemData.system.rangePower}`
-			itemData.system.rangeTextShort = "A-BL"
-			itemData.system.rangeTextBlock = `${area} - ${itemData.system.rangePower}`
+			itemData.system.rangeText = game.i18n.format('DND4EBETA.rangeBlastText',{area:area,range:itemData.system.rangePower});
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeBlastShort');
+			itemData.system.rangeTextBlock = `${area} - ${itemData.system.rangePower}`;
 		} else if(itemData.system.rangeType === "wall") {
-			itemData.system.rangeText = `Area Wall ${area} within ${itemData.system.rangePower}`
-			itemData.system.rangeTextShort = "W"
-			itemData.system.rangeTextBlock = `${area} - ${itemData.system.rangePower}`
+			itemData.system.rangeText = game.i18n.localize('DND4EBETA.rangeWallText',{area:area,range:itemData.system.rangePower});
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeWallShort');
+			itemData.system.rangeTextBlock = `${area} - ${itemData.system.rangePower}`;
 		} else if(itemData.system.rangeType === "personal") {
-			itemData.system.rangeText = "Personal"
-			itemData.system.rangeTextShort = "P"
+			itemData.system.rangeText = game.i18n.localize('DND4EBETA.rangePersonalText');
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangePersonalShort');
 		} else if(itemData.system.rangeType === "special") {
-			itemData.system.rangeText = "Special"
-			itemData.system.rangeTextShort = "S"
+			itemData.system.rangeText = game.i18n.localize('DND4EBETA.rangeSpecialText');
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeSpecialShort');
 		} else if(itemData.system.rangeType === "touch") {
-			itemData.system.rangeTextShort = "M-T";
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeTouchShort');
 			if(itemData.system.rangePower == null){
 				itemData.system.rangeTextBlock = '';
-				itemData.system.rangeText = `Melee Touch`;
+				itemData.system.rangeText = game.i18n.localize('DND4EBETA.rangeTouchText');
 			} else {
 				itemData.system.rangeText = `Melee Touch ${itemData.system.rangePower}`;
 				itemData.system.rangeTextBlock = `${itemData.system.rangePower}`;
@@ -519,27 +520,28 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 		} else if(itemData.system.rangeType === "melee"){
 			if(itemData.system.rangePower === undefined || itemData.system.rangePower === null){
 				itemData.system.rangeText = `Melee`;
-				itemData.system.rangeTextShort = `M`;
+				itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeMeleeShort');
 			} else {
 				itemData.system.rangeText = `Melee ${itemData.system.rangePower}`;
-				itemData.system.rangeTextShort = `M`;
+				itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeMeleeShort');
 				itemData.system.rangeTextBlock = `${itemData.system.rangePower}`
 			}
 		} else if(itemData.system.rangeType === "reach"){
 			itemData.system.rangeText = `Reach ${itemData.system.rangePower}`;
-			itemData.system.rangeTextShort = `R`;
+			itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeReachShort');
 			itemData.system.rangeTextBlock = `${itemData.system.rangePower}`
 		} else if(itemData.system.rangeType === "weapon") {
 
 			try {
 				const weaponUse = Helper.getWeaponUse(itemData.system, this.actor);
+				console.log("weapon use " + weaponUse);
 				if(weaponUse.system.isRanged) {
 					itemData.system.rangeText = `Range Weapon - ${weaponUse.system.name}`
-					itemData.system.rangeTextShort = `W-R`
+					itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeWeaponRangeShort');
 					itemData.system.rangeTextBlock = `${weaponUse.system.range.value}/${weaponUse.system.range.long}`
 				} else {
 					itemData.system.rangeText = `Melee Weapon - ${weaponUse.system.name}`;
-					itemData.system.rangeTextShort = "W-M";
+					itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeWeaponMeleeShort');
 					
 					if(itemData.system.rangePower == null){
 						itemData.system.rangeTextBlock = '';
@@ -550,7 +552,7 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 
 			} catch {
 				itemData.system.rangeText = "Weapon";
-				itemData.system.rangeTextShort = "W-M";
+				itemData.system.rangeTextShort = game.i18n.localize('DND4EBETA.rangeWeaponMeleeShort');
 				itemData.system.rangeTextBlock = `${itemData.system.rangePower}`
 
 				if(itemData.system.rangePower == null){

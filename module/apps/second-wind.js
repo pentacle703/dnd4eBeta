@@ -59,7 +59,7 @@ export class SecondWindDialog extends DocumentSheet {
 				content: `${this.object.system.name} uses Second Wind gaining the following benifits:
 					<ul>
 						<li>Healing for ${(updateData[`system.attributes.hp.value`] - this.object.system.attributes.hp.value)} HP.</li>
-						<li>Gaining a +2 to all defences until the stars of their next turn.</li>
+						<li>Gaining a +2 to all defences until the start of their next turn.</li>
 						${extra}
 					</ul>`,
 					// content: this.object.system.name + " uses Second Wind, healing for " + (updateData[`system.attributes.hp.value`] - this.object.system.attributes.hp.value) + " HP, and gaining a +2 to all defences until the stars of their next turn."
