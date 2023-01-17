@@ -638,7 +638,7 @@ export class Actor4e extends Actor {
 				def.base = 10;
 				this.update({[`system.defences[${def}].base`]: 10 });
 			}
-			if(data.advancedCals){
+			if(this.type === "PC"){
 				let modBonus =  def.ability != "" ? data.abilities[def.ability].mod : 0;
 				if(game.settings.get("dnd4e", "halfLevelOptions")) {
 					def.value = def.base + modBonus + def.armour + def.class + def.feat + def.enhance + def.temp + defBonusValue;
