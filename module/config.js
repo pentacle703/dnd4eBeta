@@ -467,8 +467,120 @@ DND4EBETA.powerEffectTypes = {
 	"miss": "DND4EBETA.TargetMiss",
 	"self": "DND4EBETA.TargetSelf",
 }
+
 /* -------------------------------------------- */
 
+DND4EBETA.profArmor = {
+	cloth: "DND4EBETA.ArmourProfCloth",
+	leather: "DND4EBETA.ArmourProfLeather",
+	hide: "DND4EBETA.ArmourProfHide",
+	chain: "DND4EBETA.ArmourProfChain",
+	scale: "DND4EBETA.ArmourProfScale",
+	plate: "DND4EBETA.ArmourProfPlate",
+	light: "DND4EBETA.ArmourProfShieldLight",
+	heavy: "DND4EBETA.ArmourProfShieldHeavy",
+};
+
+DND4EBETA.cloth = {
+	cloth: "DND4EBETA.ArmourProfCloth",
+};
+DND4EBETA.light = {
+	leather: "DND4EBETA.ArmourProfLeather",
+	hide: "DND4EBETA.ArmourProfHide",
+};
+DND4EBETA.heavy = {
+	chain: "DND4EBETA.ArmourProfChain",
+	scale: "DND4EBETA.ArmourProfScale",
+	plate: "DND4EBETA.ArmourProfPlate",
+};
+DND4EBETA.natural = {
+
+};
+DND4EBETA.shield = {
+	light: "DND4EBETA.ArmourProfShieldLight",
+	heavy: "DND4EBETA.ArmourProfShieldHeavy",
+};
+DND4EBETA.weaponProficiencies = {
+	simpleM: "DND4EBETA.WeaponSimpleM",
+	simpleR: "DND4EBETA.WeaponSimpleR",
+	militaryM: "DND4EBETA.WeaponMilitaryM",
+	militaryR: "DND4EBETA.WeaponMilitaryR",
+	superiorM: "DND4EBETA.WeaponSuperiorM",
+	superiorR: "DND4EBETA.WeaponSuperiorR",
+	improvisedM: "DND4EBETA.WeaponImprovisedM",
+	improvisedR: "DND4EBETA.WeaponImprovisedR",
+};
+
+DND4EBETA.weaponProficienciesMap = {
+	simpleM: "SimpleM",
+	simpleR: "SimpleR",
+	
+	militaryM: "MilitaryM",
+	militaryR: "MilitaryR",
+
+	superiorM: "SuperiorM",
+	superiorR: "SuperiorR",
+
+	improvisedM: "ImprovisedM",
+	improvisedR: "ImprovisedR",
+
+	implement: "Implement"
+};
+
+DND4EBETA.simpleM = {
+	club:"DND4EBETA.WeaponClub",
+	dagger:"DND4EBETA.WeaponDagger",
+	javelin:"DND4EBETA.WeaponJavelin",
+	mace:"DND4EBETA.WeaponMace",
+	sickle:"DND4EBETA.WeaponSickle",
+	spear:"DND4EBETA.WeaponSpear",
+	greatclub:"DND4EBETA.WeaponGreatclub",
+	morningstar:"DND4EBETA.WeaponMorningStar",
+	quarterstaff:"DND4EBETA.WeaponQuarterStaff",
+	scythe:"DND4EBETA.WeaponScythe"
+};
+DND4EBETA.simpleR = {
+	handcrossbow:"DND4EBETA.WeaponHandcrossbow",
+	sling:"DND4EBETA.WeaponSling",
+	crossbow:"DND4EBETA.WeaponCrossbow"
+};
+
+DND4EBETA.militaryM = {
+	battleaxe:"DND4EBETA.WeaponBattleaxe",
+	flail:"DND4EBETA.WeaponFlail",
+	handaxe:"DND4EBETA.WeaponHandaxe",
+	longsword:"DND4EBETA.WeaponLongsword",
+	scimitar:"DND4EBETA.WeaponScimitar",
+	shortsword:"DND4EBETA.WeaponShortsword",
+	throwinghammer:"DND4EBETA.WeaponThrowingHammer",
+	warhammer:"DND4EBETA.WeaponWarhammer",
+	warpick:"DND4EBETA.WeaponWarpick",
+	falchion:"DND4EBETA.WeaponFalchion",
+	glaive:"DND4EBETA.WeaponGlaive",
+	greataxe:"DND4EBETA.WeaponGreataxe",
+	greatsword:"DND4EBETA.WeaponGreatsword",
+	halberd:"DND4EBETA.WeaponHalberd",
+	heavyflail:"DND4EBETA.WeaponHeavyflail",
+	longspear:"DND4EBETA.WeaponLongspear",
+	maul:"DND4EBETA.WeaponMaul"
+};
+DND4EBETA.militaryR = {
+	longbow:"DND4EBETA.WeaponLongbow",
+	shortbow:"DND4EBETA.WeaponShortbow"
+};
+
+DND4EBETA.superiorM = {
+	bastardsword:"DND4EBETA.WeaponBastardsword",
+	katar:"DND4EBETA.WeaponKatar",
+	rapier:"DND4EBETA.WeaponRapier",
+	spikeChain:"DND4EBETA.WeaponSpikeChain"
+};
+DND4EBETA.superiorR = {
+	shuriken:"DND4EBETA.WeaponShuriken"
+};
+
+DND4EBETA.improvisedM = {};
+DND4EBETA.improvisedR = {};
 
 /**
  * Configure aspects of encumbrance calculation so that it could be configured by modules
@@ -879,15 +991,15 @@ DND4EBETA.weaponGroup = {
 	"whip": "DND4EBETA.WeaponGroupWhip"
 };
 
-DND4EBETA.implementGroup = {
-	"holyS": "DND4EBETA.ImplementGroupHolySymbol",
-	"ki": "DND4EBETA.ImplementGroupKiFocus",
-	"orb": "DND4EBETA.ImplementGroupOrb",
-	"rod": "DND4EBETA.ImplementGroupRod",
-	"staff": "DND4EBETA.ImplementGroupStaff",
-	"tome": "DND4EBETA.ImplementGroupTome",
-	"totem": "DND4EBETA.ImplementGroupTotem",
-	"wand": "DND4EBETA.ImplementGroupWand"
+DND4EBETA.implement = {
+	"holyS": "DND4EBETA.ImplementHolySymbol",
+	"ki": "DND4EBETA.ImplementKiFocus",
+	"orb": "DND4EBETA.ImplementOrb",
+	"rod": "DND4EBETA.ImplementRod",
+	"staff": "DND4EBETA.ImplementStaff",
+	"tome": "DND4EBETA.ImplementTome",
+	"totem": "DND4EBETA.ImplementTotem",
+	"wand": "DND4EBETA.ImplementWand"
 };
 
 /* -------------------------------------------- */
