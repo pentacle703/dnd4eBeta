@@ -120,6 +120,9 @@ export default class Item4e extends Item {
 			else if(data.system.armourBaseType === "custom"){
 				updates["system.proficient"] = actorProfs.custom.split(";").includes(data.system.armourBaseTypeCustom);
 			}
+			else if(data.system.armourBaseType === "cloth"){
+				updates["system.proficient"] = true; //everyone is proficient with cloth.
+			}
 		}
 
 		if(data.system.armour?.type === "arms" && CONFIG.DND4EBETA.shield[data.system.armour.subType]){
@@ -606,6 +609,10 @@ export default class Item4e extends Item {
 		// Create the chat message
 		if ( createMessage ) {
 
+			if(this.type === "power") {
+				Hooks.callAll("dnd4e.usePower", this, ChatMessage.getSpeaker({ actor: this.actor }));
+			}
+
 			ChatMessage.create(chatData);
 
 			if(["both", "post"].includes(this.system.macro?.launchOrder)) {
@@ -759,10 +766,17 @@ export default class Item4e extends Item {
 		const data = duplicate(this.system);
 		const labels = this.labels;
 
-		
+		// if(data.chatFlavor) {
+		// 	data.description.value = data.chatFlavor;
+		// }
+			
+		const description = data.description;
+		const weaponUse = Helper.getWeaponUse(data, this.actor);
+		const descriptionText = description.value ? Helper.commonReplace(description.value, this.actor, this.system, weaponUse?.system) : "";
+
 		// Rich text description
 		htmlOptions.async = true; //TextEditor.enrichHTML is becoming asynchronous. In the short term you may pass async=true or async=false as an option to nominate your preferred behavior.
-		data.description.value = await TextEditor.enrichHTML(data.description.value || ``, htmlOptions);
+		data.description.value = await TextEditor.enrichHTML(descriptionText || ``, htmlOptions);
 
 		// Item type specific properties
 		const props = [];
@@ -794,9 +808,7 @@ export default class Item4e extends Item {
 			);
 		}
 		
-		if(data.chatFlavor) {
-			data.description.value = data.chatFlavor;
-		}
+
 
 		// Filter properties and return
 		data.properties = props.filter(p => !!p);
@@ -1292,8 +1304,10 @@ export default class Item4e extends Item {
 		partsExpressionReplacement.unshift({target : parts[0], value: damageFormulaExpression})
 		partsCritExpressionReplacement.unshift({target : partsCrit[0], value: critDamageFormulaExpression})
 		partsMissExpressionReplacement.unshift({target : partsMiss[0], value: missDamageFormulaExpression})
+		
+		const speaker = ChatMessage.getSpeaker({ actor: this.actor });
 
-
+		Hooks.callAll("dnd4e.rollDamage", this, speaker);		
 
 		return damageRoll({
 			event,
@@ -1307,7 +1321,7 @@ export default class Item4e extends Item {
 			data: rollData,
 			title,
 			flavor,
-			speaker: ChatMessage.getSpeaker({actor: this.actor}),
+			speaker,
 			dialogOptions: {
 				width: 400,
 				top: event ? event.clientY - 80 : null,
@@ -1422,6 +1436,10 @@ export default class Item4e extends Item {
 		// if(itemData.miss?.detail) flavor += '<br>Miss: ' + itemData.miss.detail
 		// if(itemData.effect?.detail) flavor += '<br>Effect: ' + itemData.effect.detail;
 
+		const speaker = ChatMessage.getSpeaker({ actor: this.actor });
+
+		Hooks.callAll("dnd4e.rollHealing", this, speaker);
+
 		// Call the roll helper utility
 		return damageRoll({
 			event,
@@ -1432,7 +1450,7 @@ export default class Item4e extends Item {
 			title,
 			healingRoll: true,
 			flavor,
-			speaker: ChatMessage.getSpeaker({actor: this.actor}),
+			speaker,
 			dialogOptions: {
 				width: 400,
 				top: event ? event.clientY - 80 : null,
@@ -1594,7 +1612,7 @@ export default class Item4e extends Item {
 		const parts = ["@" + rollType];
 
 		if(this.system.formula) {
-			rollData[rollType] = Helper.commonReplace(this.system.formula.replace("@attribute", Helper.byString(this.system.attribute, this.actor)), this.actor.data, this.system);
+			rollData[rollType] = Helper.commonReplace(this.system.formula.replace("@attribute", Helper.byString(this.system.attribute, this.actor.system)), this.actor.system, this.system);
 		} else {
 			rollData[rollType] = `1d20 + ${Helper.byString(this.system.attribute, this.actor.system)}`; 
 			if(this.system.bonus){
@@ -1642,6 +1660,8 @@ export default class Item4e extends Item {
 		if ( !this.actor ) return null;
 		const rollData = this.actor.getRollData();
 		rollData.item = duplicate(this.system);
+		rollData.item.name = this.name;
+		rollData.item.flags = duplicate(this.flags);
 
 		// Include an ability score modifier if one exists
 		const abl = this.abilityMod;
@@ -1676,7 +1696,7 @@ export default class Item4e extends Item {
 	 */
 	static async _onChatCardAction(event) {
 		event.preventDefault();
-
+		
 		// Extract card data
 		const button = event.currentTarget;
 		button.disabled = true;
@@ -1713,20 +1733,8 @@ export default class Item4e extends Item {
 		}
 
 		// Attack and Damage Rolls
-		if ( action === "attack" ) {
-			await item.rollAttack({event});
-			// // Get current targets and set number of rolls required
-			// const numTargets = game.user.targets.size;
-			// const numTargetsDefault = 1;
-
-			// const numRolls = (numTargets || numTargetsDefault);
-
-			// // Invoke attack roll promise
-			// for (var i=0;i<numRolls;i++) {
-			// 	var isFinal = (i<numRolls-1) ? false : true;
-			// 	await item.rollAttack({event, target:i}, isFinal);
-			// }
-		}
+		console.log(action)
+		if ( action === "attack" ) await item.rollAttack({event});
 		else if ( action === "damage" ) await item.rollDamage({event, spellLevel});
 		else if ( action === "healing" ) await item.rollHealing({event, spellLevel});
 		else if ( action === "versatile" ) await item.rollDamage({event, spellLevel, versatile: true});

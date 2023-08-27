@@ -1,12 +1,12 @@
 <form class="{{cssClass}}" autocomplete="off">				
-	<section>
+	<section class="npc-upper">
 		{{!-- SHeet Header --}}
 		<header class="sheet-header">
-			<img class="profile" src="{{actor.img}}" title="{{actor.name}}" data-edit="img" style="margin-bottom: 6px;"/>
+			<img class="profile" src="{{actor.img}}" data-tooltip="{{actor.name}}" data-edit="img" style="margin-bottom: 6px;"/>
 			<section>
 				<ul class="summary">
 					<li class="summary-name-npc">
-						<input name="name" type="text" value="{{actor.name}}" title="{{localize 'DND4EBETA.NameNPC'}}" placeholder="{{localize 'DND4EBETA.NameNPC'}}" onClick="this.select();"/>
+						<input name="name" type="text" value="{{actor.name}}" data-tooltip="{{localize 'DND4EBETA.NameNPC'}}" placeholder="{{localize 'DND4EBETA.NameNPC'}}" onClick="this.select();"/>
 					</li>
 				</ul>
 	
@@ -39,7 +39,7 @@
 						</select>
 					</li>
 					<li class="summary-typeother">
-						<input name="data.details.other" type="text" value="{{data.details.other}}" title="{{localize 'DND4EBETA.Other'}} Types" placeholder="{{localize 'DND4EBETA.Other'}} Types" onClick="this.select();"/>
+						<input name="data.details.other" type="text" value="{{data.details.other}}" data-tooltip="{{localize 'DND4EBETA.CreatureSubtypes'}}" placeholder="{{localize 'DND4EBETA.CreatureSubtypes'}}" onClick="this.select();"/>
 					</li>
 				
 
@@ -50,21 +50,19 @@
 
 	</section>
 
-	<section class="section section--tabs flexshrink npc">
+	<section class="npc-lower">
+		<section class="section section--tabs flexshrink npc">
 
-		{{!-- Sheet Tab Navigation --}}
-		<nav class="sheet-tabs tabs" data-group="primary">
-			<a class="item" data-tab="biography">{{localize 'DND4EBETA.Biography'}}</a>
-		</nav>
+			{{!-- Sheet Tab Navigation --}}
+			<nav class="sheet-tabs tabs" data-group="primary">
+				<a class="item" data-tab="biography">{{localize 'DND4EBETA.Biography'}}</a>
+			</nav>
+		</section>
+		<section class="sheet-body section--tabs-content">
+			{{!-- Biography Tab --}}
+			<div class="tab biography" data-group="primary" data-tab="biography">
+				{{> "systems/dnd4e/templates/actors/parts/actor-biography.html" sections=biography}}
+			</div>			
+		</section>
 	</section>
-	<section class="sheet-body section--tabs-content">
-		{{!-- Biography Tab --}}
-		<div class="tab biography" data-group="primary" data-tab="biography">
-			{{> "systems/dnd4e/templates/actors/parts/actor-biography.html" sections=biography}}
-		</div>
-
-		
-	</section>
-
-
 </form>

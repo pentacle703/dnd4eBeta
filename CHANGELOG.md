@@ -1,5 +1,139 @@
 # Changelog
 
+## Version 0.4.15
+- Input fields that are being modified by Active Effects are now disabled and will display a tool tip warning explaining why they are disabled
+- Added DocumentSheet4e wichh extended from DocumentSheet. Enabled the above mentioned input field locking with active effects for Document Sheets
+- Added a pointer to the encumbrance CSS, so it is more apparent that it may be clicked on.
+- Replaces all html "title" tags with "data-tooltip"
+- When hovering Hit Points, will show a cog icon to indicate that to users that clicking is a configurable options
+- Max HP input field should now lock when it is set to auto calculate.
+
+## Version 0.4.14
+- compendium links fix
+- simplify Attack Formulas preview in power cards.
+- allow for helper short hands to be used in effects formulas.
+- allow for helper short hands to be used in char roll formulas.
+
+## Version 0.4.13
+- Change to default NPC attack and damage formulas. Both modernized to use the global attack/damage bonuses of `@atkMod` and `@dmgMod`
+- added weaponBaseType to the suitable keywords used when apply effects. This allows for some feats that only apply to specific weapons.
+- moved move apply active effect to effects.js
+- Brazilian Portuguese from [PilotodeMouse](https://github.com/PilotodeMouse)
+
+## Version 0.4.12
+- renamed `clickRollMessageDamageChatListener` function to `chatMessageListener` as it will be more genericly used.
+- moved the chat listener for the hover over and clicking of token names within attack result chat box out of their own wrapped listen into generic listener. This resolved an issue where the listener would not always be added correctly upon message creation. 
+
+## Version 0.4.11
+- Updates to Manual [merge](https://github.com/EndlesNights/dnd4eBeta/pull/296) from [draconas1](https://github.com/draconas1)
+
+## Version 0.4.10
+- Add effect description to applying effects to actors [merge](https://github.com/EndlesNights/dnd4eBeta/pull/295) from [zarick1342](https://github.com/zarick1342)
+
+## Version 0.4.9
+- Fix old effect labels
+
+## Version 0.4.8
+- fix to Active Effects applying, and displaying of labels
+- Autoanimations fixes [merge](https://github.com/EndlesNights/dnd4eBeta/pull/291) from [zarick1342](https://github.com/zarick1342)
+
+## Version 0.4.7
+- Hotfix, issue with SVGs height and width being set within style caused issues for a number of browsers.
+
+## Version 0.4.6
+- reworked visuals for "Probable Hit/Miss" so that it is now already Green/Red text, making it more apparent.
+- Can now rightclick attack roll messages to either select related targeted tokens to the attacks based on the categories of "All Tokens", "Hit Tokens", or "Miss Tokens"
+- Can now mouse over the "Target: <name>" text of a message to highlight the related token (if visible)
+- Can now left click the "Target: <name>" text of a message to select the related token (if permissions) 
+
+## Version 0.4.5
+- added Automated Animation support to system, [merge](https://github.com/EndlesNights/dnd4eBeta/pull/287) from [zarick1342](https://github.com/zarick1342)
+
+## Version 0.4.4
+- hotfix folders for system compendium packs, remove double folder
+
+## Version 0.4.3
+- updated active effects. now editable on items/powers that are embedded to an actor.
+- updated active effect config html layout. Removed redundant options. Added a text description field
+- update compendium packs layout
+- separated American and global English into two separate language files, with en.json representing American English spelling (armor) and en-au.json representing Global English (armour)
+- added folders to system compendium packs
+
+## Version 0.4.2
+## Version 0.4.1
+- added git attributes for binary files
+- fixed gitignore for binary file database
+- regenerated packs database
+
+## Version 0.4.0
+- conversion to Foundry v11
+
+## Version 0.3.34
+- added Automated Animation support to system, [merge](https://github.com/EndlesNights/dnd4eBeta/pull/285) from [zarick1342](https://github.com/zarick1342)
+
+## Version 0.3.33
+- add Chinese Language support courtesy of 扶摇
+- updated French Language courtesy of [Gilphe](https://github.com/Gilphe)
+- removed an some deprecated code.
+
+## Version 0.3.32
+- Label error and spelling fixes, translatable text for pseudo-power chat cards [merge](https://github.com/EndlesNights/dnd4eBeta/pull/278) from [FoxLee](https://github.com/FoxLee)
+- character sheet minimizes when using the place template button
+- minnor fixes to "limited npc", "npc" and "character" sheet css and style
+
+## Version 0.3.31
+- Saving Throw, Death Saves, Short Rests, Seconds Wind, Extended Rests and Spending Actions Points had their logic moved to Actor.js and can now make use of the fast forwarded option.
+- fastFowardSettings option added, when set to true, will always make rolls/actions with the fastforward option. use the FastForward keys instead to take the slow option.
+
+## Version 0.3.30
+- minor bug fix to how base movement is calculated
+- updated documentation about which keys should be used for movement, now you should be using "system.movement.<type>.bonusValue" rather than "system.movement.<type>.value"
+
+## Version 0.3.29
+- minor fix to how derived movement calculations
+
+## Version 0.3.28
+- French language update from [Gilphe](https://github.com/Gilphe)
+- Minor fix to item card
+- Mirror fix to NPC item chat card logic for displaying Flavour/Description
+
+## Version 0.3.27
+- Hotfix Bonus effect checker to check implement type [merge](https://github.com/EndlesNights/dnd4eBeta/pull/274) from [draconas1](https://github.com/draconas1)
+
+## Version 0.3.26
+- New bonus keys from [merge](https://github.com/EndlesNights/dnd4eBeta/pull/272) from [FoxLee](https://github.com/FoxLee)
+- French language update from [Gilphe](https://github.com/Gilphe)
+- added a number of sanitize to ensure that only strings are passes into the Roll Class constructor for the formula expression.
+
+## Version 0.3.25
+- Hotfix small issue with Actor#Update
+
+## Version 0.3.24
+- Added an @bloodied helper tag, which can be referenced in roll formulas returning a value of 1 if the actor is bloodied, or 0 if not.
+- Checking for some Deterministic elements inside parts of damage dice rolling, which will improve the final formula as displayed to players by being less cluttered with terms making it more easily readable.
+- User control for untyped/condition/special resistances [merge](https://github.com/EndlesNights/dnd4eBeta/pull/270) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.3.23
+- Creature typing for PCs [merge](https://github.com/EndlesNights/dnd4eBeta/pull/267) from [FoxLee](https://github.com/FoxLee)
+- Fixed description text output error [merge](https://github.com/EndlesNights/dnd4eBeta/pull/268) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.3.22
+- Fixed an error where items could not render if the description was set to null
+
+## Version 0.3.21
+- Translation readiness + New Conditions + Complete Weapons List [merge](https://github.com/EndlesNights/dnd4eBeta/pull/265) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.3.20
+- fix Item Card Descriptions when viewed without actor, was causing a null issue because of 0.3.19 change.
+
+## Version 0.3.19
+- You should now be able to use the "@path.to.data" notation to reference to actor data within the Item Card Descriptions.
+- Fixed style issue with item cards description backgrounds. New Line breaks should no longer sperate the background image.
+- Changes to chat card generation for NPC powers [merge](https://github.com/EndlesNights/dnd4eBeta/pull/256) from [FoxLee](https://github.com/FoxLee)
+- French Translation Added, thanks to [Gilphe](https://github.com/Gilphe) and [merge](https://github.com/EndlesNights/dnd4eBeta/pull/261) from [draconas1](https://github.com/draconas1)
+- Fix to Ritual Formula [merge](https://github.com/EndlesNights/dnd4eBeta/pull/261) from [draconas1](https://github.com/draconas1)
+- Fixed an issue with a heal dialog to properly display actor name.
+
 ## Version 0.3.18
 - added null checks to turns.js to ward off edge case.
 

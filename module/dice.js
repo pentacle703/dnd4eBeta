@@ -203,7 +203,7 @@ async function performD20RollAndCreateMessage(form, {parts, partsExpressionRepla
 		}
 		if (isAttackRoll && targets.length > rollExpressionIdx) {
 			let targName = targets[rollExpressionIdx].name;
-			let targDefVal = targets[rollExpressionIdx].document._actor.system.defences[options.attackedDef]?.value;
+			let targDefVal = targets[rollExpressionIdx].document.actor.system.defences[options.attackedDef]?.value;
 			targetData.targNameArray.push(targName);
 			targetData.targDefValArray.push(targDefVal);
 			targetData.targets.push(targets[rollExpressionIdx]);
@@ -230,8 +230,9 @@ async function performD20RollAndCreateMessage(form, {parts, partsExpressionRepla
 	if (!isAttackRoll || game.user.targets.size < 1) {
 		roll = roll.rollArray[0];
 	}
-	else {
-		roll.populateMultirollData(targetData, critStateArray);
+	else {		
+		roll.populateMultirollData(targetData, critStateArray);			
+		Hooks.callAll("dnd4e.rollAttack", data.item, targetData, speaker);		
 		if(targetData.targetHit) Helper.applyEffectsToTokens(options.powerEffects, targetData.targetHit, "hit", options.parent);
 		if(targetData.targetMissed) Helper.applyEffectsToTokens(options.powerEffects, targetData.targetMissed, "miss", options.parent);
 	}
@@ -436,7 +437,8 @@ function mergeInputArgumentsIntoRollConfig(rollConfig, parts, event, rollMode, t
 
 	// Determine whether the roll can be fast-forward, make explicit comparison here as it might be set as false, so no falsey checks
 	if ( fastForward === null || fastForward === undefined) {
-		rollConfig.fastForward = Helper.isUsingFastForwardKey(event);
+		// rollConfig.fastForward = Helper.isUsingFastForwardKey(event);
+		rollConfig.fastForward = Helper.isRollFastForwarded(event);
 		if(rollConfig.options?.fastForward){
 			rollConfig.fastForward = rollConfig.options.fastForward;
 		}

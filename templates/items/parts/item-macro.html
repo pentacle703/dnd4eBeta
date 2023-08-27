@@ -1,22 +1,22 @@
 <div class="tab" data-group="primary" data-tab="macros">
 
 	<div class="form-group">
-		<label>Scope</label>
+		<label>{{ localize "Scope" }}</label>
 		<select name="system.macro.scope" disabled>
 			{{#select system.macro.scope}}
-			<option value="global">global</option>
-			<option value="actors">actors</option>
-			<option value="actor">actor</option>
+			<option value="global">{{ localize "Global" }}</option>
+			<option value="actors">{{ localize "Actors" }}</option>
+			<option value="actor">{{ localize "Actor" }}</option>
 			{{/select}}
 		</select>
 	</div>
 
 	<div class="form-group">
-		<label>Type</label>
+		<label>{{ localize "Type" }}</label>
 		<select name="system.macro.type">
 			{{#select system.macro.type}}
-				<option value="script">Script</option>
-				<option value="chat">Chat</option>
+				<option value="script">{{ localize "Script" }}</option>
+				<option value="chat">{{ localize "Chat" }}</option>
 				<!-- <option value="{{this}}">{{this}}</option> -->
 			{{/select}}
 		</select>
@@ -32,6 +32,20 @@
 			{{/select}}
 		</select>
 	</div>
+
+	{{#if autoanimationsActive}}
+	<div class="form-group">
+		<label>Autoanimation Hook</label>
+		<select name="system.macro.autoanimationHook">
+			{{#select system.macro.autoanimationHook}}
+			<option value="">Automatic</option>
+			{{#each config.autoanimationHook as |name type|}}
+			<option value="{{type}}">{{name}}</option>
+			{{/each}}
+			{{/select}}
+		</select>
+	</div>
+	{{/if}}
 
 	<div class="form-group stacked ">
 		<label></label>

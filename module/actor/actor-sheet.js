@@ -1,4 +1,4 @@
-import { DND4EBETA } from "../config.js";
+﻿import { DND4EBETA } from "../config.js";
 import { SecondWindDialog } from "../apps/second-wind.js";
 import { ActionPointDialog } from "../apps/action-point.js";
 import { ShortRestDialog } from "../apps/short-rest.js";
@@ -14,6 +14,7 @@ import { HealMenuDialog } from "../apps/heal-menu-dialog.js";
 import TraitSelector from "../apps/trait-selector.js";
 import TraitSelectorSense from "../apps/trait-selector-sense.js";
 import TraitSelectorSave from "../apps/trait-selector-save.js";
+import ListStringInput from "../apps/list-string-input.js";
 // import {onManageActiveEffect, prepareActiveEffectCategories} from "../effects.js";
 import ActiveEffect4e from "../effects/effects.js";
 import HPOptions from "../apps/hp-options.js";
@@ -119,7 +120,7 @@ export default class ActorSheet4e extends ActorSheet {
 		// sheetData.config = CONFIG.DND4EBETA;
 		actorData.size = DND4EBETA.actorSizes;
 		for ( let [s, skl] of Object.entries(actorData.skills)) {
-			skl.ability = actorData.abilities[skl.ability];//.label.substring(0, 3).toLowerCase(); <- the sub is useless, as skl.ability is already the shorthand, and pose problem because label is languade dependant
+			// skl.ability = actorData.abilities[skl.ability].label.substring(0, 3).toLowerCase(); //what was this even used for again? I think it was some cobweb from 5e, can probably be safly deleted
 			skl.icon = this._getTrainingIcon(skl.value);
 			skl.hover = game.i18n.localize(DND4EBETA.trainingLevels[skl.value]);
 			skl.label = game.i18n.localize(DND4EBETA.skills[s]);
@@ -676,7 +677,7 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 			
 		}
 	}
-
+	
   /* -------------------------------------------- */
 
   /**
@@ -712,9 +713,9 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 		return icons[level];
 	}
 
-  /* -------------------------------------------- */
+	/* -------------------------------------------- */
 
-  /** @override */
+	/** @override */
 	activateListeners(html) {
 		super.activateListeners(html);
 
@@ -795,6 +796,7 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 			html.find('.trait-selector').click(this._onTraitSelector.bind(this));
 			html.find('.trait-selector-weapon').click(this._onTraitSelectorWeapon.bind(this));
 			html.find('.trait-selector-senses').click(this._onTraitSelectorSense.bind(this));
+			html.find('.list-string-input').click(this._onListStringInput.bind(this));
 			
 			//save throw bonus
 			html.find(`.trait-selector-save`).click(this._onTraitSelectorSaveThrow.bind(this));
@@ -829,17 +831,36 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 			html.find('.effect-save').click(event => this._onRollEffectSave(event));
 
 			html.find('.encumbrance-options').click(this._onEncumbranceDialog.bind(this))
-			
+		}
+
+		//Disabels and adds warning to input fields that are being modfied by active effects
+		if (this.isEditable) {
+			for ( const override of this._getActorOverrides() ) {
+				html.find(`input[name="${override}"],select[name="${override}"]`).each((i, el) => {
+					el.disabled = true;
+					el.dataset.tooltip = "DND4EBETA.ActiveEffectOverrideWarning";
+				});
+			}
 		}
 	}
+	
+	/* -------------------------------------------- */
+	/**
+	 * Retrieve the list of fields that are currently modified by Active Effects on the Actor.
+	 * @returns {string[]}
+	 * @protected
+	 */
+	_getActorOverrides() {
+		return Object.keys(foundry.utils.flattenObject(this.object.overrides || {}));
+	}
 
-  /* -------------------------------------------- */
+	/* -------------------------------------------- */
 
-  /**
-   * Handle input changes to numeric form fields, allowing them to accept delta-typed inputs
-   * @param event
-   * @private
-   */
+	/**
+	 * Handle input changes to numeric form fields, allowing them to accept delta-typed inputs
+	 * @param event
+	 * @private
+	 */
 	_onChangeInputDelta(event) {
 		const input = event.target;
 		const value = input.value;
@@ -991,11 +1012,11 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 			itemData.data.weaponUse = "none";
 
 			itemData.data.attack = {
-				formula:"@lvhalf",
+				formula:"5 + @atkMod",
 				ability:"form"
 			};
 			itemData.data.hit  = {
-				formula:"@powBase",
+				formula:"@powBase + @dmgMod",
 				critFormula:"@powMax",
 				baseDiceType: "d8",
 				detail: "1d8 damage."
@@ -1196,6 +1217,10 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 	*/
 	_onSecondWind(event) {
 		event.preventDefault();
+		const isFF = Helper.isRollFastForwarded(event);
+		if(isFF){
+			return this.actor.secondWind(event,{isFF});
+		}
 		new SecondWindDialog(this.actor).render(true);		
 	}
 	
@@ -1203,6 +1228,10 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 
 	_onActionPointDialog(event) {
 		event.preventDefault();
+		const isFF = Helper.isRollFastForwarded(event);
+		if(isFF){
+			return this.actor.actionPoint(event,{isFF});
+		}
 		new ActionPointDialog(this.actor).render(true);
 	}
 
@@ -1218,6 +1247,10 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 	*/
 	_onShortRest(event) {
 		event.preventDefault();
+		const isFF = Helper.isRollFastForwarded(event);
+		if(isFF){
+			return this.actor.shortRest(event,{isFF});
+		}
 		new ShortRestDialog(this.actor).render(true);
 	}
 	
@@ -1229,11 +1262,19 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 	*/
 	_onLongRest(event) {
 		event.preventDefault();
+		const isFF = Helper.isRollFastForwarded(event);
+		if(isFF){
+			return this.actor.longRest(event,{isFF});
+		}
 		new LongRestDialog(this.actor).render(true)
 	}
 
 	_onDeathSave(event) {
 		event.preventDefault();
+		const isFF = Helper.isRollFastForwarded(event);
+		if(isFF){
+			return this.actor.rollDeathSave(event,{isFF});
+		}
 		new DeathSaveDialog(this.actor).render(true);
 	}
 
@@ -1244,7 +1285,11 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 
 	_onSavingThrow(event) {
 		event.preventDefault();
-		new SaveThrowDialog(this.actor).render(true);
+		const isFF = Helper.isRollFastForwarded(event);
+		if(isFF){
+			return this.actor.rollSave(event,{isFF});
+		}
+		return new SaveThrowDialog(this.actor).render(true);
 	}
 
 	_onSavingThrowBonus(event) {
@@ -1285,7 +1330,7 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 		const item = this.actor.items.get(itemId);
 		
 		if ( item.type === "power") {
-			const fastForward = Helper.isUsingFastForwardKey(event);
+			const fastForward = Helper.isRollFastForwarded(event);
 			return this.actor.usePower(item, {configureDialog: !fastForward, fastForward: fastForward});
 		}
 		// Otherwise roll the Item directly
@@ -1422,6 +1467,14 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 		new TraitSelectorSense(this.actor, options).render(true);
 	}
 	
+	_onListStringInput(event) {
+		event.preventDefault();
+		const a = event.currentTarget;
+		const label = a.parentElement.querySelector("span");
+		const options = { name: a.dataset.target, title: label.innerText};
+		new ListStringInput(this.actor, options).render(true);
+	}
+	
 	_onTraitSelectorSaveThrow(event) {
 		event.preventDefault();
 		const a = event.currentTarget;
@@ -1435,9 +1488,9 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
   /** @override */
   setPosition(options={}) {
 	const position = super.setPosition(options);
-	const sheetBody = this.element.find(".sheet-body");
-	const bodyHeight = position.height - 345;
-	sheetBody.css("height", bodyHeight);
+	// const sheetBody = this.element.find(".sheet-body");
+	// const bodyHeight = position.height - 345;
+	// sheetBody.css("height", bodyHeight);
 	return position;
   }
 

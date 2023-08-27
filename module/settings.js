@@ -1,4 +1,23 @@
+import CustomSkillConfig from "./apps/custom-skill-config.js";
+
 export const registerSystemSettings = function() {
+
+	game.settings.registerMenu("dnd4e", "show-custom-skill", {
+		name: "SETTINGS.4eShowCustomSkillN",
+		label: "SETTINGS.4eShowCustomSkillL",
+		hint: "SETTINGS.4eShowCustomSkillH",
+		icon: 'fas fa-cog',
+		type: CustomSkillConfig,
+		restricted: true,
+	});
+
+	game.settings.register("dnd4e", "custom-skills",{
+		name: "Custom Skills",
+		scope: "world",
+		config: false,
+		type: Object,
+		default: []
+	});
 
 	/**
 	 * Track the system version upon which point a migration was last applied
@@ -202,14 +221,40 @@ export const registerSystemSettings = function() {
 		type: Boolean
 	});
 
+	game.settings.register("dnd4e", "fastFowardSettings",{
+		name: "SETTINGS.4eFastFowardSettingsN",
+		hint: "SETTINGS.4eFastFowardSettingsL",
+		scope: "client",
+		config: true,
+		default: false,
+		type: Boolean
+	});
+
 	game.keybindings.register("dnd4e", "permShowPlayer", {
-		name: "Show Players Item Permanently",
-		hint: "When clicking the show player button on an item while holding this key, it will permanently give all players permsion to see the item rather then them only being shown the item temporarily.",
+		name: game.i18n.localize("SETTINGS.4epermShowPlayerN"),
+		hint: game.i18n.localize("SETTINGS.4epermShowPlayerL"),
 		editable: [
-		  {
-			key: "AltLeft"
-		  }
+			{
+				key: "AltLeft"
+			}
 		],
 		precedence: CONST.KEYBINDING_PRECEDENCE.NORMAL,
 	});
+
+	// game.keybindings.register("dnd4e", "fastFowardKeyBind", {
+	// 	name: game.i18n.localize("SETTINGS.4eFastFowardKeyBindN"),
+	// 	hint: game.i18n.localize("SETTINGS.4eFastFowardKeyBindL"),
+	// 	editable: [
+	// 		{
+	// 			key: "Alt"
+	// 		},
+	// 		{
+	// 			key: "Control"
+	// 		},
+	// 		{
+	// 			key: "Shift"
+	// 		}
+	// 	],
+	// 	precedence: CONST.KEYBINDING_PRECEDENCE.NORMAL,
+	// });
 };

@@ -1,6 +1,7 @@
 import {Helper} from "../helper.js";
+import DocumentSheet4e from "./DocumentSheet4e.js"
 
-export class HealMenuDialog extends FormApplication {
+export class HealMenuDialog extends DocumentSheet4e {
 
 	/** @override */
 	static get defaultOptions() {
@@ -44,9 +45,11 @@ export class HealMenuDialog extends FormApplication {
 		const healTotal = surgeValue + roll.total
 
 		const healType = formData["heal-type"]
-		let healTypeText = "heals"
+		let healTypeText = game.i18n.localize("DND4EBETA.regains")
+		let hpTypeText = game.i18n.localize("DND4EBETA.HP")
 		if (healType === "tempHP") {
-			healTypeText = "gains temp HP"
+			healTypeText = game.i18n.localize("DND4EBETA.gains")
+			hpTypeText = game.i18n.localize("DND4EBETA.TempHPTip")
 			await this.object.applyTempHpChange(healTotal)
 		}
 		else {
@@ -55,20 +58,17 @@ export class HealMenuDialog extends FormApplication {
 
 		let healingSurgeText = ""
 		if (formData["spend-healing-surge"] === true) {
-			healingSurgeText = "Spending a healing surge for"
+			healingSurgeText = game.i18n.localize("DND4EBETA.SurgeSpendAnd")
 			updateData[`system.details.surges.value`] = Math.max(this.object.system.details.surges.value - 1, 0)
 			this.object.update(updateData);
-		}
-		else {
-			healingSurgeText = "For"
 		}
 
 		const rollMessage = formData.bonus && formData.bonus !== "" ? ` + ${roll.total} (${roll.formula} => ${roll.result})` : ""
 
 		ChatMessage.create({
 			user: game.user.id,
-			speaker: {actor: this.object, alias: this.object.system.name},
-			content: `${this.object.system.name} ${healTypeText}. ${healingSurgeText} ${surgeValueText} ${rollMessage}`,
+			speaker: {actor: this.object, alias: this.object.name},
+			content: `${this.object.name} ${healingSurgeText} ${healTypeText} ${surgeValueText} ${rollMessage} ${hpTypeText}.`,
 		});
 	}
 }

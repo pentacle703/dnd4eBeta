@@ -212,6 +212,7 @@
 }
 .dnd4eBeta.sheet.actor .attribute-health {
 	text-align: center;
+	position: relative;
 }
 .dnd4eBeta.sheet.actor .section--attributes .attribute-health input {
 	border-bottom: 1px solid black;
@@ -342,7 +343,6 @@
 	margin: 2px 0px;
 	text-align: center;
 	flex-grow: 1;
-
 }
 
 .dnd4eBeta .container--bottom {
@@ -672,6 +672,9 @@
 	font-weight: bold;
 	max-width: 174px;
 }
+.dnd4eBeta .form-group.wide label {
+	max-width: 208px;
+}
 .dnd4eBeta .form-group .form-fields {
 	display: flex;
 	flex-direction: row;
@@ -706,6 +709,7 @@
 .dnd4eBeta .form-group.stacked label {
 	flex: 0 0 100%;
 	margin: 0;
+	max-width:100%;
 }
 .dnd4eBeta .form-group.stacked label.checkbox {
 	flex: auto;
@@ -1510,6 +1514,11 @@ font-size: 12px;
 .dnd4eBeta.sheet.item .sheet-body {
 	overflow: hidden;
 }
+
+.dnd4eBeta.sheet .npc-lower .sheet-body {
+	height: calc(100% - 20px);
+}
+
 .dnd4eBeta.sheet.item .sheet-body .tab {
 	padding: 0 5px;
 	overflow-y: auto;
@@ -1601,7 +1610,7 @@ font-size: 12px;
 	border: none;
 }
 .dnd4eBeta.sheet.actor {
-	min-width: 774px;
+	min-width: 836px;
 	min-height: 420px;
 }
 .dnd4eBeta.sheet.item {
@@ -1665,6 +1674,7 @@ font-size: 12px;
 	border-bottom: 2px groove #eeede0;
 }
 .dnd4eBeta.sheet.actor .encumbrance {
+	cursor:pointer;
 	flex: 0 0 12px;
 	background: #7a7971;
 	margin: 1px 15px 0 1px;
@@ -2340,7 +2350,7 @@ font-size: 12px;
 	font-weight:bold;
 }
 
-.dnd4eBeta .item-description p ,
+.dnd4eBeta .item-description,
 .dnd4eBeta .item-details .alt{
 	/* background-color: #c3c2b7; */
 	/* background-color: linear-gradient(45deg, #c3c2b7, #c3c2b796) */
@@ -2349,7 +2359,9 @@ font-size: 12px;
 }
 
 span.flavor-text.critical,
-span.flavor-text.fumble {
+span.flavor-text.fumble,
+span.flavor-text.probable-hit,
+span.flavor-text.probable-miss {
 	font-weight: bold;
 }
 .dice-roll .dice-total.success {
@@ -2373,10 +2385,12 @@ span.flavor-text.fumble {
 	display:inline-block;
 	margin-right:5px;
 }
-.dice-roll .hit-prediction.critical{
+.dice-roll .hit-prediction.critical,
+.dice-roll .hit-prediction.probable-hit {
 	color:green;
 }
-.dice-roll .hit-prediction.fumble{
+.dice-roll .hit-prediction.fumble,
+.dice-roll .hit-prediction.probable-miss{
 	color:red;
 }
 /* ----------------------------------------- */
@@ -2457,4 +2471,16 @@ span.flavor-text.fumble {
 	display:flex;
 	justify-content:space-between;
 
+}
+
+.dnd4eBeta.sheet.actor .health-option:hover + .config-button,
+.dnd4eBeta.sheet.actor .config-button:hover  {
+	display: block;
+}
+
+.dnd4eBeta.sheet.actor .config-button {
+  position: absolute;
+  top: 2px;
+  right: 0px;
+  display: none;
 }

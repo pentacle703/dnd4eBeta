@@ -1,4 +1,4 @@
-/**
+﻿/**
  * A simple Beta build of D&D4e game system for the Foundry VTT.
  * Author: EndlesNights
  * Software License: GNU GPLv3
@@ -121,7 +121,7 @@ Hooks.once("setup", function() {
 	"profArmor", "cloth", "light", "heavy", "shield",
 	"weaponProficiencies", "simpleM", "simpleR", "militaryM", "militaryR", "superiorM", "superiorR", "improvisedM", "improvisedR","rangeType", "rangeTypeNoWeapon",
 	"saves", "special", "spoken", "script", "skills", "targetTypes", "timePeriods", "vision", "weaponGroup", "weaponProperties", "weaponType",
-	"weaponTypes", "weaponHands"
+	"weaponTypes", "weaponHands", "autoanimationHook"
 	];
 
 	const noSort = [
@@ -190,7 +190,7 @@ Hooks.on("renderChatMessage", (app, html, data) => {
 Hooks.on("getChatLogEntryContext", chat.addChatMessageContextOptions);
 Hooks.on("renderChatLog", (app, html, data) => {
 	Item4e.chatListeners(html);
-	chat.clickRollMessageDamageChatListener(html);
+	chat.chatMessageListener(html);
 });
 
 Hooks.on("canvasInit", function() {
@@ -230,60 +230,13 @@ $(".effect-control ").hover(
 html.find('.effect-control').last().after(message);
 });
 
-/**
- * Before passing changes to the parent ActiveEffect class,
- * we want to make some modifications to make the effect
- * rolldata aware.
- * 
- * @param {*} wrapped   The next call in the libWrapper chain
- * @param {Actor} owner     The Actor that is affected by the effect
- * @param {Object} change    The changeset to be applied with the Effect
- * @returns 
- */
-const apply = (wrapped, owner, change) => {
-	
-  const stringDiceFormat = /\d+d\d+/;
-    
-  // If the user wants to use the rolldata format
-  // for grabbing data keys, why stop them?
-  // This is purely syntactic sugar, and for folks
-  // who copy-paste values between the key and value
-  // fields.
-  if (change.key.indexOf('@') === 0)
-    change.key = change.key.replace('@', '');
-
-  // If the user entered a dice formula, I really doubt they're 
-  // looking to add a random number between X and Y every time
-  // the Effect is applied, so we treat dice formulas as normal
-  // strings.
-  // For anything else, we use Roll.replaceFormulaData to handle
-  // fetching of data fields from the actor, as well as math
-  // operations.  
-  if (!change.value.match(stringDiceFormat))
-    change.value = Roll.replaceFormulaData(change.value, owner.getRollData());
-
-  // If it'll evaluate, we'll send the evaluated result along 
-  // for the change.
-  // Otherwise we just send along the exact string we were given. 
-  try {
-    change.value = Roll.safeEval(change.value).toString();
-  } catch (e) { /* noop */ }
-
-  return wrapped(owner, change);
-}
 
 Hooks.once('init', async function() {
 
 	libWrapper.register(
 		'dnd4e',
-		'ActiveEffect.prototype.apply',
-		apply
-	);
-
-	libWrapper.register(
-		'dnd4e',
-		'MeasuredTemplate.prototype._getCircleShape',
-		AbilityTemplate._getCircleSquareShape
+		'MeasuredTemplate.prototype._computeShape',
+		AbilityTemplate._computeShape
 	);
 
 	libWrapper.register(
@@ -303,6 +256,19 @@ Hooks.once('init', async function() {
 		'Combat.prototype.nextTurn',
 		Turns._onNextTurn
 	);
+
+	libWrapper.register(
+		'dnd4e',
+		'ChatLog.prototype._onDiceRollClick',
+		chat._onDiceRollClick
+	);
+
+	libWrapper.register(
+		'dnd4e',
+		'ChatLog.prototype._processDiceCommand',
+		chat._processDiceCommand
+	);
+
 
 	Handlebars.registerHelper('each_skills', function(array, opts, test, test2){
  		var data ='';
@@ -333,4 +299,3 @@ Hooks.on("getSceneControlButtons", function(controls){
 		onClick: toggled => canvas.templates._setWallCollision = toggled
   })
 })
-

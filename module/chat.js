@@ -90,53 +90,120 @@ export const displayDamageOptionButtons = function(message, html, data) {
  * @return {Array}              The extended options Array including new context choices
  */
 export const addChatMessageContextOptions = function(html, options) {
-	let canApply = li => {
+
+	let isAttackRoll = li => {
+		const message = game.messages.get(li.data("messageId"));
+		return message.isRoll && message.isContentVisible && li[0].querySelector('.hit-prediction');
+	};
+	
+	let canApplyDamage = li => {
 		const message = game.messages.get(li.data("messageId"));
 		return message.isRoll && message.isContentVisible && canvas.tokens.controlled.length;
 	};
+
 	options.push(
+		{
+			name: game.i18n.localize("DND4EBETA.SeleteAllTargets"),
+			icon: '<i class="fa-regular fa-users"></i>',
+			condition: isAttackRoll,
+			callback: li => selectTargetTokens(li, "all")
+		},
+		{
+			name: game.i18n.localize("DND4EBETA.SeleteHitTargets"),
+			icon: '<i class="fa-solid fa-users"></i>',
+			condition: isAttackRoll,
+			callback: li => selectTargetTokens(li, "hit")
+		},
+		{
+			name: game.i18n.localize("DND4EBETA.SeleteMissedTargets"),
+			icon: '<i class="fa-light fa-users"></i>',
+			condition: isAttackRoll,
+			callback: li => selectTargetTokens(li, "miss")
+		},
+
 		{
 			name: game.i18n.localize("DND4EBETA.ChatContextDamage"),
 			icon: '<i class="fas fa-user-minus"></i>',
-			condition: canApply,
+			condition: canApplyDamage,
 			callback: li => applyChatCardDamage(li, 1)
 		},
 		{
 			name: game.i18n.localize("DND4EBETA.ChatContextHealing"),
 			icon: '<i class="fas fa-user-plus"></i>',
-			condition: canApply,
+			condition: canApplyDamage,
 			callback: li => applyChatCardDamage(li, -1)
 		},
 		{
 			name: game.i18n.localize("DND4EBETA.ChatContextTempHp"),
 			icon: '<i class="fas fa-user-clock fa-fw"></i>',
-			condition: canApply,
+			condition: canApplyDamage,
 			callback: li => applyChatCardTempHp(li)
 		},
 		{
 			name: game.i18n.localize("DND4EBETA.ChatContextDoubleDamage"),
 			icon: '<i class="fas fa-user-injured"></i>',
-			condition: canApply,
+			condition: canApplyDamage,
 			callback: li => applyChatCardDamage(li, 2)
 		},
 		{
 			name: game.i18n.localize("DND4EBETA.ChatContextHalfDamage"),
 			icon: '<i class="fas fa-user-shield"></i>',
-			condition: canApply,
+			condition: canApplyDamage,
 			callback: li => applyChatCardDamage(li, 0.5)
 		},
 		{
 			name: game.i18n.localize("DND4EBETA.ChatContextTrueDamage"),
 			icon: '<i class="fa-light fa-user-shield"></i>',
-			condition: canApply,
+			condition: canApplyDamage,
 			callback: li => applyChatCardDamage(li, 1, true)
 		}
 	);
 	return options;
 };
 
-export function clickRollMessageDamageChatListener(html) {
+export function chatMessageListener(html) {
 	html.on('click', '.chat-damage-button', this.clickRollMessageDamageButtons.bind(this));
+
+	html.on('click', '.target', this.clickTokenActorName.bind(this));
+	html.on('mouseenter', '.target', this.hoverTokenActorName.bind(this)).on('mouseleave', '.target', this.hoverTokenActorName.bind(this));
+}
+
+//When clicking on the name of a taget in a chat messages from attack rolls, will select and pan to the highlighted token
+export const clickTokenActorName = function(event){
+		event.preventDefault();
+
+		const tokenID = event.currentTarget.getAttribute('target-id');
+		if(!tokenID) return;
+
+		const token = canvas.tokens.get(tokenID);
+
+		if(!token) return console.log(`Token ID: ${tokenID} does not exist in this scene.`);
+		if ( !token.actor?.testUserPermission(game.user, "OBSERVER") ) return;
+
+		if(!event.shiftKey){
+			canvas.tokens.selectObjects();
+		}
+
+		token.control({releaseOthers: false});
+		return canvas.animatePan(token.center);
+}
+
+//When hover over chat messages with "Target" from attack rolls, will highlight the token who's have is being hovered
+export const hoverTokenActorName = function(event){
+	event.preventDefault();
+
+	if ( !canvas.ready ) return;
+
+	if(event.type === "mouseenter"){
+		const tokenID = event.currentTarget.getAttribute('target-id');
+		const token = canvas.tokens.get(tokenID);
+		if ( token?.isVisible ) {
+		  if ( !token.controlled ) token._onHoverIn(event, {hoverOutOthers: true});
+		  event.currentTarget._highlighted = token;
+		}
+	} else if(event.type === "mouseleave"){
+		return event.currentTarget._highlighted?._onHoverOut(event);
+	}
 }
 
 export const clickRollMessageDamageButtons = function(event) {
@@ -164,6 +231,42 @@ export const clickRollMessageDamageButtons = function(event) {
 	}
 	else if (action === "TempHeal") {
 		applyChatCardTempHpInner(roll)
+	}
+}
+
+/* -------------------------------------------- */
+/**
+ *
+ * @param {HTMLElement} li    	The list item clicked
+ * @param {string} targetType   Target Type between "hit", "miss", and "all". But I just use else for all soooo what ever
+ * @return {Promise}
+ */
+function selectTargetTokens(li, targetType){
+	const message = game.messages.get(li.data("messageId"));
+
+	if(!event.shiftKey){
+		canvas.tokens.selectObjects();
+	}
+
+	if(targetType === "hit"){
+		console.log("hit")
+		for(const roll of message.rolls){
+			if([game.i18n.localize("DND4EBETA.AttackRollHit"), game.i18n.localize("DND4EBETA.AttackRollHitCrit")].includes(roll.options.multirollData.hitstate)){
+				canvas.tokens.get(roll.options.multirollData.targetID).control({releaseOthers: false});
+			}
+		}
+	}
+	else if(targetType === "miss"){
+		console.log("miss")
+		for(const roll of message.rolls){
+			if([game.i18n.localize("DND4EBETA.AttackRollMiss"), game.i18n.localize("DND4EBETA.AttackRollMissCrit")].includes(roll.options.multirollData.hitstate)){
+				canvas.tokens.get(roll.options.multirollData.targetID).control({releaseOthers: false});
+			}
+		}
+	} else {
+		for(const roll of message.rolls){
+			canvas.tokens.get(roll.options.multirollData.targetID).control({releaseOthers: false});
+		}
 	}
 }
 
@@ -261,13 +364,46 @@ function applyChatCardTempHpInner(roll){
 	}));
 }
 
-// decimal total = 143.13m;
-// int divider = 5;
-// while (divider > 0) {
-//   decimal amount = Math.Round(total / divider, 2);
-//   Console.WriteLine(amount);
-//   total -= amount;
-//   divider--;
-// }
+export function _onDiceRollClick(wrapper, event){
+	//stop roll from opening up when clicking the .target 
+	if(event.target.classList.contains("target") || (event.target.tagName.toLowerCase() === 'b' && event.target.parentElement.classList.contains("target"))){
+		return;
+	}
 
-/* -------------------------------------------- */
+	return wrapper(event);
+}
+
+  /* -------------------------------------------- */
+
+  /**
+   * Process messages which are posted using a dice-roll command
+   * @param {string} command          The chat command type
+   * @param {RegExpMatchArray[]} matches Multi-line matched roll expressions
+   * @param {Object} chatData         The initial chat data
+   * @param {Object} createOptions    Options used to create the message
+   * @private
+   * 
+   *  Overrides the core class allowing custom 4e system helper functions to be used
+   */
+
+export async function _processDiceCommand(wrapper, ...args){
+	let [command, matches, chatData, createOptions] = args;
+
+	const actor = ChatMessage.getSpeakerActor(chatData.speaker) || game.user.character;
+	const rollData = actor ? actor.getRollData() : {};
+	const rolls = [];
+	for ( const match of matches ) {
+		if ( !match ) continue;
+		const [formula, flavor] = match.slice(2, 4);
+		if ( flavor && !chatData.flavor ) chatData.flavor = flavor;
+		// const roll = Roll.create(formula, rollData);
+		const roll = Roll.create(actor? game.helper.commonReplace(formula,actor) : formula, rollData);
+		await roll.evaluate({async: true});
+		rolls.push(roll);
+	}
+	chatData.type = CONST.CHAT_MESSAGE_TYPES.ROLL;
+	chatData.rolls = rolls;
+	chatData.sound = CONFIG.sounds.dice;
+	chatData.content = rolls.reduce((t, r) => t + r.total, 0);
+	createOptions.rollMode = command;
+}
