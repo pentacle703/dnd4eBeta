@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.4.18
+- Automated saving throw dialogues [merge](https://github.com/EndlesNights/dnd4eBeta/pull/302) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.4.17
+- Change to how Skill Labels work, allowing for the value to be manly set or overridden on an individual actor.
+
+## Version 0.4.16
+- Added system support for custom skills
+- edit to remaining effect time which cause issues with other modules
+
 ## Version 0.4.15
 - Input fields that are being modified by Active Effects are now disabled and will display a tool tip warning explaining why they are disabled
 - Added DocumentSheet4e wichh extended from DocumentSheet. Enabled the above mentioned input field locking with active effects for Document Sheets

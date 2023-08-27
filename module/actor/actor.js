@@ -23,7 +23,6 @@ export class Actor4e extends Actor {
 				this.system.powerGroupTypes = `usage`;
 			}
 		}
-
 	}
 
 	/** @override */
@@ -658,7 +657,7 @@ export class Actor4e extends Actor {
 	}
 
 	calcSkillCharacter(system){
-		for (let [id, skl] of Object.entries(system.skills)) {
+		for (const [id, skl] of Object.entries(system.skills)) {
 			skl.value = parseFloat(skl.value || 0);
 
 			let sklBonusValue = 0;
@@ -709,7 +708,7 @@ export class Actor4e extends Actor {
 			} else {
 				skl.total = skl.value + skl.base + skl.mod + sklBonusValue + skl.effectBonus - sklArmourPenalty + Math.floor(system.details.level / 2);
 			}
-			skl.label = game.i18n.localize(DND4EBETA.skills[id]);
+			skl.label = skl.label? skl.label : game.i18n.localize(DND4EBETA.skills[id]);
 
 		}
 	}
@@ -769,7 +768,7 @@ export class Actor4e extends Actor {
 				skl.total = skl.base;
 			}
 
-			skl.label = game.i18n.localize(DND4EBETA.skills[id]);
+			skl.label = skl.label? skl.label : game.i18n.localize(DND4EBETA.skills[id]);
 		}
 	}
 
@@ -1007,7 +1006,15 @@ export class Actor4e extends Actor {
 	}
 
 	async rollSave(event, options){
-		let message = `${game.i18n.localize("DND4EBETA.RollSave")} ${options.dc || 10}`;
+		//let message = `${game.i18n.localize("DND4EBETA.RollSave")} ${options.dc || 10}`;
+		
+		let message =  `(${game.i18n.localize("DND4EBETA.AbbreviationDC")} ${options.dc || 10})`;
+		if(options.effectSave){
+			message = `${game.i18n.localize("DND4EBETA.SaveVs")} <strong>${this.effects.get(options.effectId).name}</strong> ${message}`;
+		}else{
+			message = `${game.i18n.localize("DND4EBETA.RollSave")} ${message}`;
+		}
+		
 		const parts = [this.system.details.saves.value];
 		if (options.save) {
 			parts.push(options.save)
