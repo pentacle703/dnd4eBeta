@@ -176,6 +176,8 @@
 				},
 				"surges": {
 					"value": 0,
+					"base" : 0,
+					"bonus":0,
 					"max": 0
 				},
 				"surgeEnv": {

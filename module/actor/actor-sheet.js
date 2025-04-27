@@ -1012,7 +1012,7 @@ ${parseInt(data.system.movement.shift.value)} ${game.i18n.localize("DND4EBETA.Mo
 			itemData.data.weaponUse = "none";
 
 			itemData.data.attack = {
-				formula:"5 + @atkMod",
+				formula:"5 + @lv + @atkMod",
 				ability:"form"
 			};
 			itemData.data.hit  = {

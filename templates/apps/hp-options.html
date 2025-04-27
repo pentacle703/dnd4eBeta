@@ -16,6 +16,15 @@
 		<input type="text" name="system.attributes.hp.misc" value="{{system.attributes.hp.misc}}" data-tooltip="{{localize 'DND4EBETA.HPBonus'}}"  placeholder="0" data-dtype="Number" onClick="this.select();" style="width:40px; text-align: center;"/>
 		<span>{{localize 'DND4EBETA.HPBonus'}}</span>
 	</div>
+		<div>
+		<input type="text" name="system.details.surges.base" value="{{system.details.surges.base}}" data-tooltip="{{localize 'DND4EBETA.SurgeBase'}}"  placeholder="0" data-dtype="Number" onClick="this.select();" style="width:40px; text-align: center;"/>
+		<span>{{localize 'DND4EBETA.SurgeBase'}}</span>
+	</div>
+	</div>
+		<div>
+		<input type="text" name="system.details.surges.bonus" value="{{system.details.surges.bonus}}" data-tooltip="{{localize 'DND4EBETA.SurgeCountBon'}}"  placeholder="0" data-dtype="Number" onClick="this.select();" style="width:40px; text-align: center;"/>
+		<span>{{localize 'DND4EBETA.SurgeCountBon'}}</span>
+	</div>
 	
 	<div>
 		<input type="checkbox" name="system.attributes.hp.temprest" data-dtype="Boolean" {{checked system.attributes.hp.temprest}} data-tooltip="{{localize 'DND4EBETA.HPTempKeep'}}"/>

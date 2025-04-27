@@ -32,7 +32,7 @@ export class Actor4e extends Actor {
 		//used to call changes to HP scrolling text
 		if(data[`system.attributes.hp.value`] != undefined && data[`system.attributes.hp.value`] != this.system.attributes.hp.value){
 			options.dhp = data[`system.attributes.hp.value`] - this.system.attributes.hp.value;
-			data[`system.details.isBloodied`] = data[`system.attributes.hp.value`] <= this.system.attributes.hp.max/2;
+			data[`system.details.isBloodied`] = data[`system.attributes.hp.value`] <= Math.floor(this.system.attributes.hp.max/2);
 		}
 
 		// Apply changes in Actor size to Token width/height
@@ -178,6 +178,7 @@ export class Actor4e extends Actor {
 		if(system.attributes.hp.autototal)
 		{
 			system.attributes.hp.max = system.attributes.hp.perlevel * (system.details.level - 1) + system.attributes.hp.starting + system.attributes.hp.feat + system.attributes.hp.misc + system.abilities.con.value;
+			system.details.surges.max = system.details.surges.base + system.details.surges.bonus + system.abilities.con.mod;
 		}
 		
 		//Set Health related values
@@ -215,7 +216,7 @@ export class Actor4e extends Actor {
 		system.details.secondWindValue = system.details.surgeValue + system.details.secondwindbon.value;
 
 		//check if bloodied
-		system.details.isBloodied = (system.attributes.hp.value <= system.attributes.hp.max/2);
+		system.details.isBloodied = (system.attributes.hp.value <= Math.floor(system.attributes.hp.max/2));
 
 		if(!(system.details.surgeEnv.bonus.length === 1 && jQuery.isEmptyObject(system.details.surgeEnv.bonus[0]))) {
 			for( const b of system.details.surgeEnv.bonus) {
@@ -1119,9 +1120,9 @@ export class Actor4e extends Actor {
 				console.log(`total:${r.total}`)
 				console.log(`healamount:${healamount}`)
 			}
-
+			let hpValue = this.system.attributes.hp.value <= 0?0 : this.system.attributes.hp.value;
 			updateData[`system.attributes.hp.value`] = Math.min(
-				(this.system.attributes.hp.value + healamount),
+				(hpValue + healamount),
 				this.system.attributes.hp.max
 			);
 		

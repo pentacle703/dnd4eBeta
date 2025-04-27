@@ -3,7 +3,7 @@
 		{{!-- Sheet Header --}}
 		<header class="sheet-header">
 			<ul class="summary">
-				<li class="summary-name">
+					<li class="summary-name placeholder" data-placeholder="{{localize 'DND4EBETA.Name'}}">
 					<input name="name" type="text" value="{{actor.name}}" data-tooltip="{{localize 'DND4EBETA.Name'}}" placeholder="{{localize 'DND4EBETA.Name'}}" onClick="this.select();"/>
 				</li>
 				<li class="summary-race placeholder" data-placeholder="{{localize 'DND4EBETA.Race'}}">
@@ -86,8 +86,12 @@
 						</div>
 						<span class="sep">/</span>
 						<div class="attribute-sub attribute-input">
-							<input type="text" name="system.details.surges.max" value="{{system.details.surges.max}}" data-tooltip="{{localize 'DND4EBETA.SurgeDay'}}"  placeholder="Total" data-dtype="Number" onClick="this.select();"/>
-							<div class="attribute-display" data-tooltip="{{localize 'DND4EBETA.SurgeDay'}}">{{localize 'DND4EBETA.Day'}}</div>
+							{{#if system.attributes.hp.autototal}}
+								<input disabled type="text" name="system.details.surges.max" value="{{system.details.surges.max}}" data-tooltip="{{localize 'DND4EBETA.SurgeDay'}}"  placeholder="Total" data-dtype="Number" onClick="this.select();"/>
+							{{else}}
+								<input type="text" name="system.details.surges.max" value="{{system.details.surges.max}}" data-tooltip="{{localize 'DND4EBETA.SurgeDay'}}"  placeholder="Total" data-dtype="Number" onClick="this.select();"/>
+							{{/if}}
+								<div class="attribute-display" data-tooltip="{{localize 'DND4EBETA.SurgeDay'}}">{{localize 'DND4EBETA.Day'}}</div>
 						</div>
 						<div class="attribute-sub">
 							<input type="checkbox" name="system.details.secondwind" data-dtype="Boolean" {{checked system.details.secondwind}} data-tooltip="{{localize 'DND4EBETA.SecondWindUsed'}}"/>
