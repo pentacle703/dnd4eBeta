@@ -60,6 +60,8 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	display:flex;
+	gap:5px;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary input {
@@ -91,64 +93,45 @@
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-name {
-	width: calc(46% - 34px);
-	display: inline-block;
+	flex-grow:1;
 }
 .dnd4eBeta.sheet .sheet-header .summary-name-npc {
-	width: calc(100% - 380px);
-	display: inline-block;
+	flex-grow:1;
 }
 .dnd4eBeta.sheet .sheet-header .summary-type {
-	width: 114px;
-	display: inline-block;
 }
 .dnd4eBeta.sheet .sheet-header .summary-typeother {
-	width: calc(100% - 460px);
-	display: inline-block;
+	flex-grow:1;
 }
 .dnd4eBeta.sheet .sheet-header .summary-race,
 .dnd4eBeta.sheet .sheet-header .summary-class {
-	width: calc(26% - 34px);
-	display: inline-block;
 }
 .dnd4eBeta.sheet .sheet-header .summary-level {
-	float: right;
-	width: 98px;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-level label{
-	width: 50%;
+	
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-level input{
 	text-align: center;
-	width: 35%;
+	width: 50px;
 	padding: 0%;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-leader {
-	float: right;
-	width: 98px;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-role-second {
-	float: right;
-	width: 86px;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-role {
-	float: right;
-	width: 98px;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-size {
-	width: 102px;
-	display: inline-block;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-origin {
-	width: 90px;
-	display: inline-block;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-path {
@@ -158,17 +141,16 @@
 
 .dnd4eBeta.sheet .sheet-header .summary-exp {
 	float: right;
-	width: 135px;
+	width: 150px;
+	display:flex;
+	gap:2px;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-exp label{
-	width: 50%;
 }
 
 .dnd4eBeta.sheet .sheet-header .summary-exp input{
 	text-align: center;
-	width: 65%;
-	padding: 0%;
 }
 
 .dnd4eBeta .sheet-header {
