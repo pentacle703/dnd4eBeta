@@ -4,16 +4,16 @@ import DocumentSheet4e from "./DocumentSheet4e.js"
 export class MovementDialog extends DocumentSheet4e {
 	static get defaultOptions() {
 		const options = super.defaultOptions;
-		return mergeObject(options, {
+		return foundry.utils.mergeObject(options, {
 			id: "movement-dialog",
-			classes: ["dnd4eBeta", "movement-dialog"],
+			classes: ["dnd4e", "movement-dialog"],
 			template: "systems/dnd4e/templates/apps/movement-dialog.html",
 			width: 420,
 			closeOnSubmit: false
 		});
 	}
 	get title() {
-		return `${this.object.name} - Movement Speed Dialog`;
+		return `${this.object.name} - ${game.i18n.localize( 'DND4E.SpeedAndMove')}`;
 	}
 
 	/** @override */
@@ -36,10 +36,11 @@ export class MovementDialog extends DocumentSheet4e {
 		event.preventDefault();
 		const moveName = event.currentTarget.parentElement.dataset.movement;
 		const target = `system.movement.${moveName}`;
-		console.log(moveName)
-		console.log(event.currentTarget.parentElement.dataset)
-		console.log(event.currentTarget.parentElement)
-		const options = {target: target, label: `${this.object.system.movement[moveName].label} Movement Bonus` };
+		console.debug(moveName);
+		console.debug(event.currentTarget.parentElement.dataset);
+		console.debug(event.currentTarget.parentElement);
+		console.debug(this.object.system.movement[moveName]);
+		const options = {target: target, label: `${game.i18n.format('DND4E.MovementBonus',{mode: moveName})}` };
 		new AttributeBonusDialog(this.object, options).render(true);
 	}
 }

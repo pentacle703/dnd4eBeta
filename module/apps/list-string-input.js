@@ -6,9 +6,9 @@ export default class ListStringInput extends FormApplication {
 
   /** @override */
 	static get defaultOptions() {
-	  return mergeObject(super.defaultOptions, {
+	  return foundry.utils.mergeObject(super.defaultOptions, {
 		id: "trait-selector",
-		classes: ["dnd4eBeta"],
+		classes: ["dnd4e"],
 		title: "Actor Trait Input",
 		template: "systems/dnd4e/templates/apps/list-string-input.html",
 		width: 320,
@@ -35,7 +35,7 @@ export default class ListStringInput extends FormApplication {
   getData() {
 	
     // Get current values and make them into a single string
-	let attr = getProperty(this.object, this.attribute) || {};
+	let attr = foundry.utils.getProperty(this.object, this.attribute) || {};
 	
 	let traits = attr.join(";");
     // Return data

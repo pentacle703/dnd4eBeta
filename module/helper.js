@@ -1,4 +1,4 @@
-export class Helper {
+﻿export class Helper {
 
 	static executeMacro(item) {
 		const macro = new Macro ({
@@ -31,7 +31,7 @@ export class Helper {
 	*/
 	static byString(s, o) {
 		s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-		s = s.replace(/^\./, '');           // strip a leading dot
+		s = s.replace(/^\./, '');					 // strip a leading dot
 		var a = s.split('.');
 		for (var i = 0, n = a.length; i < n; ++i) {
 			var k = a[i];
@@ -67,7 +67,7 @@ export class Helper {
 		if(itemData.weaponUse === "default" || itemData.weaponUse === "defaultOH") {
 			let setMelee = ["melee", "simpleM", "militaryM", "superiorM", "improvM", "naturalM", "siegeM"];
 			let setRanged = ["ranged", "simpleR", "militaryR", "superiorR", "improvR", "naturalR", "siegeR"];
-			return actor.itemTypes.weapon.find((i) =>  {
+			return actor.itemTypes.weapon.sort(i => i.system.weaponHand === "hOff" ? 1 : -1).find((i) =>	{ // Flush off-hand to the end
 				if(i.system.equipped) {
 
 					if(itemData.weaponType === "any") {
@@ -138,18 +138,25 @@ export class Helper {
 		return new RegExp(/@([a-z.0-9_\-]+)/gi);
 	}
 
-
 	static async applyEffects(arrayOfParts, rollData, actorData, powerData, weaponData = null, effectType) {
-		const debug = game.settings.get("dnd4e", "debugEffectBonus") ? `D&D4eBeta |` : ""
+		const debug = game.settings.get("dnd4e", "debugEffectBonus") ? `D&D4e |` : ""
 		if (actorData.effects) {
 			const powerInnerData = powerData.system
 			const weaponInnerData = weaponData?.system
+			let enhValue = weaponInnerData?.enhance||0;
 			if (debug) {
-				console.log(`${debug} Debugging ${effectType} effects for ${powerData.name}.  Supplied Weapon: ${weaponData?.name}`)
+				console.log(`${debug} Debugging ${effectType} effects for ${powerData.name}.	Supplied Weapon: ${weaponData?.name}`)
+			}
+			
+			//Using inherent enhancements?
+			if(game.settings.get("dnd4e", "inhEnh")) {
+				//If our enhancement is lower than the inherent level, adjust it upward
+				enhValue = Math.max(weaponInnerData?.enhance||0,Helper.findKeyScale(actorData.system.details.level, CONFIG.DND4E.SCALE.basic, 1));
+				//console.log(`Checked inherent atk/dmg enhancement of +'${Helper.findKeyScale(actorData.system.details.level, CONFIG.DND4E.SCALE.basic, 1)}' for this level against weapon value of +${weaponInnerData?.enhance})`);
 			}
 
 			const effectsToProcess = []
-			const effects = Array.from(actorData.effects.values()).filter((effect) => effect.disabled === false)
+			const effects = actorData.getActiveEffects().filter((effect) => effect.disabled === false)
 			effects.forEach((effect) => {
 				effect.changes.forEach((change => {
 					if (change.key.startsWith(`power.${effectType}`) || (weaponInnerData && change.key.startsWith(`weapon.${effectType}`))) {
@@ -161,21 +168,37 @@ export class Helper {
 					}
 				}))
 			})
+			
+			//Dummy up some extra effects to represent global atk/damage bonuses
+			const globalMods = actorData.system.modifiers;
+			if(globalMods[effectType].value != 0){
+				for (const [key, value] of Object.entries(globalMods[effectType])) {
+					//No way to sort bonus array types, so we'll combine them with untyped before checks.
+					const adjValue = ( key == 'untyped' ? value + globalMods[effectType].bonusValue : value);
+					if(!['value','bonus','warn','bonusValue','label'].includes(key) && adjValue != 0){
+						effectsToProcess.push({
+							name : `Global ${effectType} modifier`,
+							key: `modifiers.${effectType}.global.${key}`,
+							value: adjValue
+						});
+					}
+				}
+			}			
+			
 			if (effectsToProcess.length > 0) {
 				if (debug) {
 					console.log(`${debug} Found the following possible active effects`)
 					effectsToProcess.forEach((effect) => console.log(`${debug} ${effect.name} : ${effect.key} = ${effect.value}`))
 				}
 
-				const suitableKeywords = []
+				const suitableKeywords = ['global']
 				this._addKeywords(suitableKeywords, powerInnerData.damageType)
 				this._addKeywords(suitableKeywords, powerInnerData.effectType)
 				if (weaponInnerData) {
 					this._addKeywords(suitableKeywords, weaponInnerData.weaponGroup)
 					this._addKeywords(suitableKeywords, weaponInnerData.properties)
 					this._addKeywords(suitableKeywords, weaponInnerData.damageType)
-					this._addKeywords(suitableKeywords, weaponInnerData.implement) // implement group for implement powers.  Bad naming of property, sorry -Drac
-
+					this._addKeywords(suitableKeywords, weaponInnerData.implement) // implement group for implement powers.	Bad naming of property, sorry -Drac
 					if(weaponInnerData.weaponBaseType){
 						suitableKeywords.push(weaponInnerData.weaponBaseType)
 					}
@@ -188,29 +211,58 @@ export class Helper {
 					suitableKeywords.push(powerInnerData.secondPowersource)
 				}
 				if(powerInnerData.weaponType){
-					//Tool-based keywords like implement and weapon belong to the power, so in most cases we do not need to check the weapon to know which ones to use. Mixed melee/ranged weapons are the main exception, so we check the equipped weapon just for those.
+					//Tool-based keywords like implement and weapon belong to the power, so in most cases we do not need to check the weapon to know which ones to use. Melee/ranged weapons and "any" are the exceptions, so we check the equipped weapon just for those.
+					
 					switch(powerInnerData.weaponType){
+						case "none": break;
 						case "implement":
 							suitableKeywords.push("usesImplement");
 							break;
 						case "melee":
 							suitableKeywords.push("weapon");
+							suitableKeywords.push("melee");
 							suitableKeywords.push("meleeWeapon");
 							break;
 						case "ranged":
 							suitableKeywords.push("weapon");
+							suitableKeywords.push("ranged");
 							suitableKeywords.push("rangedWeapon");
 							break;
-						case "meleeRanged":
-							suitableKeywords.push("weapon");
-							if (weaponInnerData){
-								if (weaponInnerData.isRanged){
+						default:
+							if(weaponInnerData) {
+								 if(weaponInnerData.WeaponType === "implement") {
+									suitableKeywords.push("usesImplement");
+								} else if(weaponInnerData.isRanged) {
+									suitableKeywords.push("weapon");
 									suitableKeywords.push("rangedWeapon");
+									suitableKeywords.push("ranged");
 								} else {
+									suitableKeywords.push("weapon");
 									suitableKeywords.push("meleeWeapon");
+									suitableKeywords.push("melee");
 								}
 							}
 							break;
+					}
+					
+					//Check for proficiency with tool
+					switch(powerInnerData.weaponType){
+						case "none": break;
+						case "implement":
+							if(weaponInnerData) {
+								if(weaponInnerData.proficientI) suitableKeywords.push('proficient');
+							}
+							break;
+						case "any":
+							if(weaponInnerData) {
+								 if(weaponInnerData.WeaponType === "implement") {
+									if(weaponInnerData.proficientI) suitableKeywords.push('proficient');
+								}
+							}	
+						default:
+							if(weaponInnerData) {
+								if(weaponInnerData.proficient) suitableKeywords.push('proficient');
+							}
 					}
 				}
 				
@@ -249,11 +301,54 @@ export class Helper {
 							break;
 					}
 				}
+				
+				//Special case for detecting one-handed weapons
+				if(weaponInnerData){
+					if(!weaponInnerData.properties.two){ //Skip if it's tagged two-handed
+						//Make sure it's some kind of weapon
+						const wpnGroupValues = Object.values(weaponInnerData.weaponGroup);
+						const isWeapon = wpnGroupValues.some(function(element){
+							return element;
+						});
+						if(isWeapon){
+							suitableKeywords.push("one");
+						}
+					}
+				}
+				
+				if(powerInnerData.attack?.def){
+					switch(powerInnerData.attack.def){
+						case "ac":
+							suitableKeywords.push("vsAC");
+							break;
+						case "fort":
+							suitableKeywords.push("vsFort");
+							break;
+						case "ref":
+							suitableKeywords.push("vsRef");
+							break;
+						case "will":
+							suitableKeywords.push("vsWill");
+							break;
+					}
+				}
+				
+				if(powerInnerData.attack?.isBasic){
+					suitableKeywords.push("basic");
+					if(suitableKeywords.includes("melee")) suitableKeywords.push("mBasic");
+					if(suitableKeywords.includes("ranged")) suitableKeywords.push("rBasic");
+				};
+				
+				//console.debug(rollData);
+				
+				if(powerInnerData.attack?.isCharge || rollData?.isCharge) suitableKeywords.push("charge");
+				if(powerInnerData.attack?.isOpp || rollData?.isCharge) suitableKeywords.push("opp");
 
 				if (debug) {
-					console.log(`${debug} based on power source, effect type, damage type and (if weapon) weapon group, properties and damage type the following effect keys are suitable`)
-					suitableKeywords.sort()
-					console.log(`${debug} ${suitableKeywords.join(", ")}`)
+					console.debug(rollData);
+					console.log(`${debug} based on power source, effect type, damage type and (if weapon) weapon group and properties the following effect keys are suitable`);
+					console.log(suitableKeywords.sort());
+					console.log(`${debug} ${suitableKeywords.join(", ")}`);
 				}
 
 				// filter out to just the relevant effects by keyword
@@ -283,7 +378,7 @@ export class Helper {
 							if (newParts["untypedEffectBonus"]) {
 								newParts["untypedEffectBonus"] = newParts["untypedEffectBonus"] + effectValue
 								if (debug) {
-									console.log(`${debug} ${effect.name} : ${effect.key} => ${effect.value} = ${effectValue}: Additional untyped Bonus.  They Stack.`)
+									console.log(`${debug} ${effect.name} : ${effect.key} => ${effect.value} = ${effectValue}: Additional untyped Bonus.	They Stack.`)
 								}
 							}
 							else {
@@ -304,7 +399,7 @@ export class Helper {
 								}
 								else {
 									if (debug) {
-										console.log(`${debug} ${effect.name} : ${effect.key} => ${effect.value} = ${effectValue} : Is not great than existing ${bonusType}, discarding`)
+										console.log(`${debug} ${effect.name} : ${effect.key} => ${effect.value} = ${effectValue} : Is not greater than existing ${bonusType}, discarding`)
 									}
 								}
 							}
@@ -317,11 +412,11 @@ export class Helper {
 						}
 					}
 					else {
-						ui.notifications.warn(`Tried to process an bonus effect that had too few/many .'s in it: ${effect.key}: ${effect.value}`)
-						console.log(`Tried to process an bonus effect that had too few/many .'s in it: ${effect.key}: ${effect.value}`)
+						ui.notifications.warn(`Tried to process a bonus effect that had too few/many .'s in it: ${effect.key}: ${effect.value}`)
+						console.log(`Tried to process a bonus effect that had too few/many .'s in it: ${effect.key}: ${effect.value}`)
 					}
 				}
-
+				
 				for (const [key, value] of Object.entries(newParts)) {
 					for (const parts of arrayOfParts) {
 						parts.push("@" + key)
@@ -336,25 +431,25 @@ export class Helper {
 		if (keywordsActive) {
 			for (const [key, value] of Object.entries(keywordsActive)) {
 				if (value === true) {
-					suitableKeywords.push(key)
+					suitableKeywords.push(key);
 				}
 			}
 		}
 	}
 
 	/**
-	 * Perform replacement of @variables in the formula involving a power.  This is a recursive function with 2 modes of operation!
+	 * Perform replacement of @variables in the formula involving a power.	This is a recursive function with 2 modes of operation!
 	 *
 	 * @param formula The formula to examine and perform replacements on
-	 * @param actorData The data from the actor to use to resolve variables: `actor.system`.  This may be null
+	 * @param actorData The data from the actor to use to resolve variables: `actor.system`.	This may be null
 	 * @param powerInnerData The data from the power to use to resolve variables. `power.system`
-	 * @param weaponInnerData The data from the weapon to use to resolve variables.  `item.system` This may be null
-	 * @param depth The number of times to recurse down the formula to replace variables, a safety net to stop infinite recursion.  Defaults to 1 which will produce 2 loops.  A depth of 0 will also prevent evaluation of custom effect variables (as that is an infinite hole)
+	 * @param weaponInnerData The data from the weapon to use to resolve variables.	`item.system` This may be null
+	 * @param depth The number of times to recurse down the formula to replace variables, a safety net to stop infinite recursion.	Defaults to 1 which will produce 2 loops.	A depth of 0 will also prevent evaluation of custom effect variables (as that is an infinite hole)
 	 * @param returnDataInsteadOfFormula If set to true it will return a data object of replacement variables instead of the formula string
 	 * @return {String|{}|number} "0" if called with a depth of <0, A substituted formula string if called with returnDataInsteadOfFormula = false (the default) or an object of {variable = value} if called with returnDataInsteadOfFormula = true
 	 */
 	// DEVELOPER: Remember this call is recursive, if you change the method signature, make sure you update everywhere its used!
-	static commonReplace (formula, actorData, powerInnerData, weaponInnerData=null, depth = 1, returnDataInsteadOfFormula = false) {
+	static commonReplace (formula, actorData, powerInnerData, weaponInnerData=null, depth = 2, returnDataInsteadOfFormula = false) {
 		if (depth < 0 ) return 0;
 		let newFormula = formula.toString(); // just in case integers somehow get passed
 		if (returnDataInsteadOfFormula) {
@@ -370,7 +465,7 @@ export class Helper {
 		}
 
 		if(actorData) {
-			const actorInnerData = actorData.system
+			const actorInnerData = actorData.system;
 			if (actorInnerData) {
 				newFormula = Roll.replaceFormulaData(newFormula, actorInnerData);
 				if(powerInnerData) {
@@ -398,18 +493,32 @@ export class Helper {
 				newFormula = newFormula.replaceAll("@heroicOrParagon", actorInnerData.details.level < 21 ? 1 : 0);
 				newFormula = newFormula.replaceAll("@paragonOrEpic", actorInnerData.details.level >= 11 ? 1 : 0);
 
-				newFormula = newFormula.replaceAll("@bloodied",  actorInnerData.attributes.hp.value <= actorInnerData.attributes.hp.max/2 ? 1 : 0);
+				newFormula = newFormula.replaceAll("@bloodied",	actorInnerData.details.isBloodied ? 1 : 0);
+				
 				newFormula = newFormula.replaceAll("@surgeValue",  actorInnerData.details.surgeValue);
+				newFormula = newFormula.replaceAll("@sneak",	CONFIG.DND4E.SNEAKSCALE[actorInnerData.details.tier]);
+
+				//targets @scale plus some #
+				newFormula = newFormula.replace(/@scale(\d*)/g,	(match, number) => {return this.findKeyScale(actorInnerData.details.level, CONFIG.DND4E.SCALE.basic, number-1)});
+
 			}
 			else {
-				console.log("An actor data object without a .data property was passed to common replace. Probably passed actor.system by mistake!.  Replacing: " + formula)
+				console.log("An actor data object without a .data property was passed to common replace. Probably passed actor.system by mistake!.	Replacing: " + formula)
 			}
 		}
 
 		newFormula = newFormula.replaceAll("@powerLevel", powerInnerData?.level ? powerInnerData.level : 0)
-
+		let enhValue = weaponInnerData?.enhance||0;
+		
 		if(weaponInnerData) {
-			newFormula =  newFormula.replaceAll("@itemLevel", weaponInnerData.level ? weaponInnerData.level : 0)
+			//Using inherent enhancements?
+			if(game.settings.get("dnd4e", "inhEnh")) {
+				//If our enhancement is lower than the inherent level, adjust it upward
+				enhValue = Math.max(weaponInnerData?.enhance||0,Helper.findKeyScale(actorData.system.details.level, CONFIG.DND4E.SCALE.basic, 1));
+				//console.log(`Checked inherent atk/dmg enhancement of +${Helper.findKeyScale(actorData.system.details.level, CONFIG.DND4E.SCALE.basic, 1)} for this level against weapon value of +${weaponInnerData?.enhance}`);
+			}
+			
+			newFormula =	newFormula.replaceAll("@itemLevel", weaponInnerData.level ? weaponInnerData.level : 0)
 
 			if (powerInnerData.weaponType === "implement") {
 				newFormula = newFormula.replaceAll("@wepAttack", this.bracketed(this.commonReplace(weaponInnerData.attackFormImp, actorData, powerInnerData, weaponInnerData, depth-1) || 0));
@@ -435,15 +544,17 @@ export class Helper {
 			
 			newFormula = newFormula.replaceAll("@profImpBonus", weaponInnerData.proficientI ? weaponInnerData.profImpBonus || 0 : 0);
 			newFormula = newFormula.replaceAll("@profBonus", weaponInnerData.proficient ? weaponInnerData.profBonus || 0 : 0);
-			newFormula = newFormula.replaceAll("@enhanceImp", weaponInnerData.proficientI ? weaponInnerData.enhance || 0 : 0);
-			newFormula = newFormula.replaceAll("@enhance", weaponInnerData.enhance || 0);
-			
+
+			//newFormula = newFormula.replaceAll("@enhanceImp", weaponInnerData.proficientI ? this.bracketed(this.commonReplace(weaponInnerData.enhance, actorData, powerInnerData, weaponInnerData, depth-1) || 0) : 0);
+			newFormula = newFormula.replaceAll("@enhanceImp", weaponInnerData.proficientI ? this.bracketed(this.commonReplace(enhValue, actorData, powerInnerData, weaponInnerData, depth-1) || 0) : 0);
+			//newFormula = newFormula.replaceAll("@enhance", this.bracketed(this.commonReplace(weaponInnerData.enhance, actorData, powerInnerData, weaponInnerData, depth-1) || 0));
+			newFormula = newFormula.replaceAll("@enhance", this.bracketed(this.commonReplace(enhValue, actorData, powerInnerData, weaponInnerData, depth-1) || 0));
 
 			newFormula = this.replaceData (newFormula, weaponInnerData);
 			
 			
 			//deprecated, kept for legacy purposes and because it's really handy for High Crit Weapons!
-			// make sure to keep the dice formula same as main.  Definite candidate for a future refactor.
+			// make sure to keep the dice formula same as main.	Definite candidate for a future refactor.
 			if(newFormula.includes("@wepDice")) {
 				let parts = weaponInnerData.damageDice.parts;
 				let indexStart = newFormula.indexOf("@wepDice")+8;
@@ -462,7 +573,7 @@ export class Helper {
 					let r = new Roll(`${quantity}`);
 
 					if(r.isDeterministic){
-						r.evaluate({async: false});
+						r.evaluateSync();
 						quantity = r.total;
 					}
 
@@ -475,7 +586,7 @@ export class Helper {
 					if (i < parts.length - 1) dice += '+';
 				}
 				const possibleDice = this.commonReplace(dice, actorData, powerInnerData, weaponInnerData, depth-1)
-				dice = possibleDice !== 0 ? possibleDice : dice //there probably shouldn't be any formula left, because @wepDice is a formula contents under our command.  So if we had hit the bottom of the recursion tree, just try the original
+				dice = possibleDice !== 0 ? possibleDice : dice //there probably shouldn't be any formula left, because @wepDice is a formula contents under our command.	So if we had hit the bottom of the recursion tree, just try the original
 				newFormula = newFormula.slice(0, indexStart) + newFormula.slice(indexEnd, newFormula.length);
 				newFormula = newFormula.replaceAll("@wepDice", dice);
 			}
@@ -485,14 +596,14 @@ export class Helper {
 			//	-	weapon based damage
 			//	-	flat damage
 			//	-	dice damage
-			// make sure to keep the weapon dice formula same as above.  Definite candidate for a future refactor.
+			// make sure to keep the weapon dice formula same as above.	Definite candidate for a future refactor.
 			if(newFormula.includes("@powBase")) {
 				let quantity = this.commonReplace(powerInnerData.hit.baseQuantity, actorData, powerInnerData, weaponInnerData, depth-1);
 				let r = new Roll(`${quantity}`);
 
 				//Just to help keep the rolls cleaner, look for Deterministic elements to remove
 				if(r.isDeterministic){
-					r.evaluate({async: false});
+					r.evaluateSync();
 					quantity = r.total;
 				}
 
@@ -513,7 +624,7 @@ export class Helper {
 						let r2 = new Roll(`${weaponDiceQuantity}`);
 	
 						if(r2.isDeterministic){
-							r2.evaluate({async: false});
+							r2.evaluateSync();
 							weaponDiceQuantity = r2.total;
 						}
 						if(weaponInnerData.properties.bru) {
@@ -550,7 +661,7 @@ export class Helper {
 				dice = this.commonReplace(dice, actorData, powerInnerData, weaponInnerData, depth-1)
 				let r = new Roll(`${dice}`)
 				if(dice){
-					r.evaluate({maximize: true, async: false});
+					r.evaluateSync({maximize: true});
 					newFormula = newFormula.replaceAll("@wepMax", r.result);
 				} else {
 					newFormula = newFormula.replaceAll("@wepMax", dice);
@@ -568,7 +679,8 @@ export class Helper {
 				quantity = this.commonReplace(quantity, actorData, powerInnerData, weaponInnerData, 0)
 				let diceType = powerInnerData.hit.baseDiceType.toLowerCase();
 				let rQuantity = new Roll(`${quantity}`)
-				rQuantity.evaluate({maximize: true, async: false});
+				// rQuantity.evaluate({maximize: true, async: false});
+				rQuantity.evaluateSync({maximize: true});
 
 				//check if is valid number
 				if(this._isNumber(rQuantity.total)){
@@ -645,8 +757,7 @@ export class Helper {
 
 				let r = new Roll(`${quantity}`);
 				if(r.isDeterministic){
-					console.log("here")
-					r.evaluate({async: false});
+					r.evaluateSync();
 					quantity = r.total;
 				}
 				
@@ -678,7 +789,7 @@ export class Helper {
 				let quantity = powerInnerData.hit.baseQuantity;
 				let diceType = powerInnerData.hit.baseDiceType.toLowerCase();
 				let rQuantity = new Roll(`${quantity}`)
-				rQuantity.evaluate({maximize: true, async: false});
+				rQuantity.evaluateSync({maximize: true});
 				
 				if(this._isNumber(rQuantity.result)) {
 					quantity = rQuantity.result;
@@ -709,33 +820,33 @@ export class Helper {
 			}			
 		}
 
-		// this is done at the bottom, because I don't want to iterating the entire actor effects collection unless I have to
+		// this is done at the bottom, because I don't want to be iterating the entire actor effects collection unless I have to
 		// as this could get unnecessarily expensive quickly.
 		// Depth > 0 check is here to prevent an infinite recursion situation as this will call to common replace in case the variable uses a formula
-		// having got to the bottom of common replace, check to see if there are any more @variables left.  If there aren't, then don't bother going any further
+		// having got to the bottom of common replace, check to see if there are any more @variables left.	If there aren't, then don't bother going any further
 		if (actorData?.effects && depth > 0 && newFormula.includes('@')) {
-			const debug = game.settings.get("dnd4e", "debugEffectBonus") ? `D&D4eBeta |` : ""
+			const debug = game.settings.get("dnd4e", "debugEffectBonus") ? `D&D4e |` : ""
 			if (debug) {
-				console.log(`${debug} Substituting '${formula}', end of processing produced '${newFormula}' which still contains an @variable.  Searching active effects for a suitable variable`)
+				console.log(`${debug} Substituting '${formula}', end of processing produced '${newFormula}' which still contains an @variable.	Searching active effects for a suitable variable`)
 			}
 			const resultObject = {}
-			const effects = Array.from(actorData.effects.values()).filter((effect) => effect?.disabled === false);
+			const effects = actorData.getActiveEffects().filter((effect) => effect?.disabled === false);
 			effects.forEach((effect) => {
 				effect.changes.forEach((change => {
 					if (this.variableRegex.test(change.key)) {
 						if (debug) {
-							console.log(`${debug} Found custom variable ${change.key} in effect ${effect.label}.  Value: ${change.value}`)
+							console.log(`${debug} Found custom variable ${change.key} in effect ${effect.name}.	Value: ${change.value}`)
 						}
 						const changeValueReplaced = this.commonReplace(change.value, actorData, powerInnerData, weaponInnerData, 0) // set depth to avoid infinite recursion
 						if (!resultObject[change.key]) {
 							resultObject[change.key] = changeValueReplaced
 							if (debug) {
-								console.log(`${debug} Effect: ${effect.label}.  Computed Value: ${change.value} was the first match to ${change.key} `)
+								console.log(`${debug} Effect: ${effect.name}.	Computed Value: ${change.value} was the first match to ${change.key} `)
 							}
 						}
 						else {
 							if (debug) {
-								console.log(`${debug} Effect: ${effect.label}. Computed Value: ${change.value} was an additional match to ${change.key} adding to previous`)
+								console.log(`${debug} Effect: ${effect.name}. Computed Value: ${change.value} was an additional match to ${change.key} adding to previous`)
 							}
 							if(this._isNumber(resultObject[change.key]) && this._isNumber(changeValueReplaced)){
 								resultObject[change.key] = Number(resultObject[change.key]) + Number(changeValueReplaced)
@@ -755,19 +866,31 @@ export class Helper {
 			}
 		}
 
+		//Temporary, this should be moved into an enrichers class in the future
+		const regexTextPattern = /\[\[\/text\s(.*?)\]\]/g;
+		newFormula = newFormula.replace(regexTextPattern, (text, r) => {
+			let roll = new Roll(`${r}`);
+
+			if(roll.isDeterministic){
+				roll.evaluateSync();
+				return roll.total;
+			}
+			return `[[${r}]]`;
+		});
+
 		return newFormula;
 	}
 
-  /**
-   * Replace referenced data attributes in the roll formula with the syntax `@attr` with the corresponding key from
-   * the provided `data` object. This is a temporary helper function that will be replaced with Roll.replaceFormulaData()
-   * in Foundry 0.7.1.
-   *
-   * @param {String} formula    The original formula within which to replace.
-   * @param {Object} data       Data object to use for value replacements.
-   * @param {Object} missing    Value to use as missing replacements, such as {missing: "0"}.
-   * @return {String} The formula with attributes replaced with values.
-   */
+	/**
+	 * Replace referenced data attributes in the roll formula with the syntax `@attr` with the corresponding key from
+	 * the provided `data` object. This is a temporary helper function that will be replaced with Roll.replaceFormulaData()
+	 * in Foundry 0.7.1.
+	 *
+	 * @param {String} formula		The original formula within which to replace.
+	 * @param {Object} data			 Data object to use for value replacements.
+	 * @param {Object} missing		Value to use as missing replacements, such as {missing: "0"}.
+	 * @return {String} The formula with attributes replaced with values.
+	 */
 	static replaceData(formula, data, {missing=null, depth=1}={}) {
 		// Exit early if the formula is invalid.
 		if ( typeof formula != "string" || depth < 1) {
@@ -776,7 +899,7 @@ export class Helper {
 		// Replace attributes with their numeric equivalents.
 		let dataRgx = this.variableRegex
 		let rollFormula = formula.replace(dataRgx, (match, term) => {
-			let value = getProperty(data, term);
+			let value = foundry.utils.getProperty(data, term);
 			// If there was a value returned, trim and return it.
 			if ( value || value == 0) {
 				return String(value).trim();
@@ -800,32 +923,35 @@ export class Helper {
 	}
 
 	/**
-	 * Create and evaluate a roll based on the given roll expression string.  If no expression has been provided, evaluate a roll of 0.
+	 * Create and evaluate a roll based on the given roll expression string.	If no expression has been provided, evaluate a roll of 0.
 	 * In the event that the string fails to evaluate, display an error and return a roll of 0.
 	 *
 	 * Note this uses the async roll API so returns a Promise<Roll>
 	 *
-	 * @param {String} rollString    		The roll expression.
-	 * @param {String} errorMessageKey      The key that will be localised for the error message if the roll fails.
+	 * @param {String} rollString				The roll expression.
+	 * @param {String} errorMessageKey			The key that will be localised for the error message if the roll fails.
 	 * @param {String} context				Context on the source of the roll string / where it is being used
-	 * @returns {Promise<Roll>}    			The evaluated Roll instance as a promise
+	 * @returns {Promise<Roll>}					The evaluated Roll instance as a promise
 	 */
-	static async rollWithErrorHandling(rollString, { errorMessageKey = "DND4EBETA.InvalidRollExpression", context = "" }) {
+	static async rollWithErrorHandling(rollString, { errorMessageKey = "DND4E.InvalidRollExpression", context = "" }) {
 		if (!errorMessageKey) {
-			errorMessageKey = "DND4EBETA.InvalidRollExpression"
+			errorMessageKey = "DND4E.InvalidRollExpression"
 		}
 		if (rollString && rollString !== "") {
 			const roll = new Roll(`${rollString}`);
-			return roll.roll({async : true}).catch(err => {
+			// return roll.roll({async : true}).catch(err => {
+			return roll.roll().catch(err => {
 				let msg = context ? `${game.i18n.localize(errorMessageKey)} (in ${context}) : ${rollString}` : `${game.i18n.localize(errorMessageKey)} : ${rollString}`
 				ui.notifications.error(msg);
 				console.log(msg)
 				console.log(err)
-				return new Roll("0").roll({async : true});
+				// return new Roll("0").roll({async : true});
+				return new Roll("0").roll();
 			});
 		}
 		else {
-			return new Roll("0").roll({async : true});
+			// return new Roll("0").roll({async : true});
+			return new Roll("0").roll();
 		}
 	}
 
@@ -833,18 +959,18 @@ export class Helper {
 		if(chatData.area) {
 			try{
 				let areaForm = this.commonReplace(`${chatData.area}`, actorData);
-				return  Roll.safeEval(areaForm);
+				return	Roll.safeEval(areaForm);
 			} catch (e) {
-				return  chatData.area;
+				return	chatData.area;
 			}
 		} else {
-			return  0;
+			return	0;
 		}
 	}
 
-	static _preparePowerCardData(chatData, CONFIG, actorData=null) {
-		let powerSource = (chatData.powersource && chatData.powersource !== "") ? `${CONFIG.DND4EBETA.powerSource[`${chatData.powersource}`]}` : "";
-		let powerDetail = `<span class="basics"><span class="usage">${CONFIG.DND4EBETA.powerUseType[`${chatData.useType}`]}</span>`;
+	static _preparePowerCardData(chatData, CONFIG, actorData=null, attackTotal=null) {
+		let powerSource = (chatData.powersource && chatData.powersource !== "") ? `${CONFIG.DND4E.powerSource[`${chatData.powersource}`]}` : "";
+		let powerDetail = `<span class="basics"><span class="usage">${CONFIG.DND4E.powerUseType[`${chatData.useType}`]}</span>`;
 		let tag = [];
 		
 		if(chatData.powersource) tag.push(powerSource);
@@ -857,57 +983,57 @@ export class Helper {
 		}
 
 		if (chatData.powersource && chatData.secondPowersource && chatData.secondPowersource != chatData.powersource){
-			tag.push(`${CONFIG.DND4EBETA.powerSource[`${chatData.secondPowersource}`]}`)
+			tag.push(`${CONFIG.DND4E.powerSource[`${chatData.secondPowersource}`]}`)
 		}
 		
 		if(chatData.weaponDamageType) {
 			for ( let [damage, d] of Object.entries(chatData.weaponDamageType)) {
-				if(d && CONFIG.DND4EBETA.damageTypes[damage]) tag.push(CONFIG.DND4EBETA.damageTypes[damage])
+				if(d && CONFIG.DND4E.damageTypes[damage]) tag.push(CONFIG.DND4E.damageTypes[damage])
 			}
 		}
 		else if(chatData.damageType) {
 			for ( let [damage, d] of Object.entries(chatData.damageType)) {
-				if(d && CONFIG.DND4EBETA.damageTypes[damage]) tag.push(CONFIG.DND4EBETA.damageTypes[damage])
+				if(d && CONFIG.DND4E.damageTypes[damage]) tag.push(CONFIG.DND4E.damageTypes[damage])
 			}
 		}
 
 		if(chatData.effectType) {
 			for ( let [effect, e] of Object.entries(chatData.effectType)) {
-				if(e && CONFIG.DND4EBETA.effectTypes[effect]) tag.push(CONFIG.DND4EBETA.effectTypes[effect])
+				if(e && CONFIG.DND4E.effectTypes[effect]) tag.push(CONFIG.DND4E.effectTypes[effect])
 			}
 		}
 		tag.sort();
 		if(tag.length > 0) powerDetail += ` ♦ <span class="keywords">${tag.join(', ')}</span>`;
 		
-		powerDetail += `</span><br /><span><span class="action">${CONFIG.DND4EBETA.abilityActivationTypes[chatData.actionType]}</span> `;
+		powerDetail += `</span><br /><span><span class="action">${CONFIG.DND4E.abilityActivationTypes[chatData.actionType].label}</span> `;
 
 		if(chatData.rangeType === "weapon") {
-			powerDetail += ` <span class="range-type weapon">${CONFIG.DND4EBETA.weaponType[chatData.weaponType]}</span>`;
+			powerDetail += ` <span class="range-type weapon">${CONFIG.DND4E.weaponType[chatData.weaponType]}</span>`;
 			if(chatData.rangePower) powerDetail += ` <span class="range-value">${chatData.rangePower}</span>`;
 		}
 		else if (chatData.rangeType === "melee") {
-			powerDetail += ` <span class="range-type melee">${game.i18n.localize("DND4EBETA.Melee")}</span><span class="range-size"> ${chatData.rangePower}</span>`;
+			powerDetail += ` <span class="range-type melee">${game.i18n.localize("DND4E.Melee")}</span> <span class="range-size">${chatData.rangePower}</span>`;
 		}
 		else if (chatData.rangeType === "reach") {
-			powerDetail += ` <span class="range-type reach">${game.i18n.localize("DND4EBETA.rangeReach")}</span> <span class="range-size">${chatData.rangePower}</span>`;
+			powerDetail += ` <span class="range-type reach">${game.i18n.localize("DND4E.rangeReach")}</span> <span class="range-size">${chatData.rangePower}</span>`;
 		}
 		else if (chatData.rangeType === "range") {
-			powerDetail += ` <span class="range-type ranged">${game.i18n.localize("DND4EBETA.rangeRanged")}</span> <span class="range-size">${chatData.rangePower}</span>`;
+			powerDetail += ` <span class="range-type ranged">${game.i18n.localize("DND4E.rangeRanged")}</span> <span class="range-size">${chatData.rangePower}</span>`;
 		}
 		else if (['closeBurst', 'closeBlast'].includes(chatData.rangeType)) {
-			powerDetail += ` <span class="range-type close">${CONFIG.DND4EBETA.rangeType[chatData.rangeType]}</span><span class="range-size">${this._areaValue(chatData, actorData)}</span>`;
+			powerDetail += ` <span class="range-type close">${CONFIG.DND4E.rangeType[chatData.rangeType].label}</span> <span class="range-size">${this._areaValue(chatData, actorData)}</span>`;
 		}
 		else if (['rangeBurst', 'rangeBlast', 'wall'].includes(chatData.rangeType)) {
-			powerDetail += ` <span class="range-type area">${CONFIG.DND4EBETA.rangeType[chatData.rangeType]}</span> <span class="range-size">${this._areaValue(chatData, actorData)}</span> <span class="label-within">${game.i18n.localize("DND4EBETA.RangeWithin")}</span> <span class="range-within">${chatData.rangePower}</span>`;
+			powerDetail += ` <span class="range-type area">${CONFIG.DND4E.rangeType[chatData.rangeType].label}</span> <span class="range-size">${this._areaValue(chatData, actorData)}</span> <span class="label-within">${game.i18n.localize("DND4E.RangeWithin")}</span> <span class="range-within">${chatData.rangePower}</span>`;
 		}
 		else if (chatData.rangeType === "personal") {
-			powerDetail += ` <span class="range-type personal">${CONFIG.DND4EBETA.rangeType[chatData.rangeType]}</span>`;
+			powerDetail += ` <span class="range-type personal">${CONFIG.DND4E.rangeType[chatData.rangeType].label}</span>`;
 		}
 		else if (chatData.rangeType === "special") {
-			powerDetail += ` <span class="range-type special">${CONFIG.DND4EBETA.rangeType[chatData.rangeType]}</span>`;
+			powerDetail += ` <span class="range-type special">${CONFIG.DND4E.rangeType[chatData.rangeType].label}</span>`;
 		}
 		else if (chatData.rangeType === "touch") {
-			powerDetail += ` <span class="range-type melee">${game.i18n.localize("DND4EBETA.Melee")}</span> <span class="range-size touch">${CONFIG.DND4EBETA.rangeType[chatData.rangeType]}</span>`;
+			powerDetail += ` <span class="range-type melee">${game.i18n.localize("DND4E.Melee")}</span> <span class="range-size touch">${CONFIG.DND4E.rangeType[chatData.rangeType].label}</span>`;
 		}
 		else {
 			powerDetail += `</span>`;
@@ -915,86 +1041,101 @@ export class Helper {
 		powerDetail += `</span>`;
 
 		if(chatData.requirement) {
-			powerDetail += `<p span><b>${game.i18n.localize("DND4EBETA.Requirements")}:</b> ${chatData.requirement}</span></p>`;
+			powerDetail += `<p class="requirements"><strong>${game.i18n.localize("DND4E.Requirements")}:</strong> ${chatData.requirement}</p>`;
 		}
 
 		if(chatData.trigger) {
-			powerDetail += `<p span><b>${game.i18n.localize("DND4EBETA.Trigger")}:</b> ${chatData.trigger}</span></p>`;
+			powerDetail += `<p class="trigger"><strong>${game.i18n.localize("DND4E.Trigger")}:</strong> ${chatData.trigger}</p>`;
 		}
 
 		if(chatData.target && (typeof chatData.target === "string")) { //target can sometimes be an object for things that did not have a dropdown
-			powerDetail += `<p span><b>${game.i18n.localize("DND4EBETA.Target")}:</b> ${chatData.target}</span></p>`;
+			powerDetail += `<p class="target"><strong>${game.i18n.localize("DND4E.Target")}:</strong> ${chatData.target}</p>`;
 		}
 
 		if(!chatData.postEffect && chatData.effect.detail) {
-			powerDetail += `<p class="alt"><b>${game.i18n.localize("DND4EBETA.Effect")}:</b> ${chatData.effect.detail}</p>`;
+			powerDetail += `<p class="effect alt"><strong>${game.i18n.localize("DND4E.Effect")}:</strong> ${chatData.effect.detail}</p>`;
 		}
 		
 		if(!chatData.postSpecial && chatData.special) {
-			powerDetail += `<p><b>${game.i18n.localize("DND4EBETA.Special")}:</b> ${chatData.special}</p>`;
+			powerDetail += `<p class="special"><strong>${game.i18n.localize("DND4E.Special")}:</strong> ${chatData.special}</p>`;
 			for (let [i, entry] of Object.entries(chatData.specialAdd.parts)){
-				powerDetail += `<p>${entry}</p>`;
+				powerDetail += `<p class="special multi">${entry}</p>`;
 			}
 		}
 
 		if(chatData.attack.isAttack) {
-			if(chatData.attack.ability === "form"){
-				//if does not srtart with a number sign add one
-
-				let attackForm = this.commonReplace(chatData.attack.formula, actorData);
-				try {
-					attackForm = Roll.safeEval(attackForm).toString();
-				} catch (e) { /* noop */ }
-				
-
-				let trimmedForm = attackForm.trim()
-				if(!(trimmedForm.startsWith("+") || trimmedForm.startsWith("-"))) {
-					trimmedForm = '+' + trimmedForm;
+			let attackForm = chatData.attack.formula;
+			attackForm = chatData.attack.formula.replaceAll('@powerMod',`@${chatData.attack?.ability}Mod`);
+			const attackValues = this.commonReplace(attackForm, actorData);
+			if(attackTotal){
+				//if does not start with a number sign add one
+				attackTotal = attackTotal.toString();
+				if(!(attackTotal.startsWith("+") || attackTotal.startsWith("-"))) {
+					attackTotal = '+' + attackTotal;
 				}
-				powerDetail += `<p><b>${game.i18n.localize("DND4EBETA.Attack")}</b>: ${trimmedForm} ${game.i18n.localize("DND4EBETA.VS")} ${CONFIG.DND4EBETA.def[chatData.attack.def]}</p>`;
+			}else if(chatData.attack.ability){
+				attackTotal = CONFIG.DND4E.abilities[chatData.attack.ability];
+			}else{
+				attackTotal = game.i18n.localize("DND4E.Attack");
+			}
+			
+			if(chatData.attack.ability === "form"){				
+				powerDetail += `<p class="attack"><strong>${game.i18n.localize("DND4E.Attack")}:</strong> <a class="attack-bonus" data-tooltip="${attackValues}">${attackTotal}</a>`;
 			}
 			else if(chatData.attack.ability){
-				powerDetail += `<p><b>${game.i18n.localize("DND4EBETA.Attack")}</b>: ${CONFIG.DND4EBETA.abilities[chatData.attack.ability]} ${game.i18n.localize("DND4EBETA.VS")} ${CONFIG.DND4EBETA.def[chatData.attack.def]}</p>`;
+				powerDetail += `<p class="attack"><strong>${game.i18n.localize("DND4E.Attack")}</strong>: <a class="attack-bonus" data-tooltip="`;		
+				if(game.settings.get("dnd4e","cardAtkDisplay")=="bonus"){
+					powerDetail += `${CONFIG.DND4E.abilities[chatData.attack.ability]} (${attackValues})">${attackTotal}</a>`;
+				}else{
+					powerDetail += `${attackTotal} (${attackValues})">${CONFIG.DND4E.abilities[chatData.attack.ability]}</a>`;
+				}
 			} else {
-				powerDetail += `<p><b>${game.i18n.localize("DND4EBETA.Attack")}</b>: ${game.i18n.localize("DND4EBETA.Attack")} ${game.i18n.localize("DND4EBETA.VS")} ${CONFIG.DND4EBETA.def[chatData.attack.def]}</p>`;
+				powerDetail += `<p class="attack"><strong>${game.i18n.localize("DND4E.Attack")}</strong>: ${game.i18n.localize("DND4E.Attack")}`;
 			}
-			// powerDetail += `<p><b>${game.i18n.localize("DND4EBETA.Attack")}</b>: ${CONFIG.DND4EBETA.abilities[chatData.attack.ability] || "Attack"} ${game.i18n.localize("DND4EBETA.VS")} ${CONFIG.DND4EBETA.def[chatData.attack.def]}</p>`;
+			powerDetail += ` ${game.i18n.localize("DND4E.VS")} ${CONFIG.DND4E.defensives[chatData.attack.def].abbreviation}</p>`;
 		}
 
-		let highlight = true;
 		if (chatData.hit.detail){
-			powerDetail += `<p${highlight? ` class="alt"`: ``}><b>${game.i18n.localize("DND4EBETA.Hit")}:</b> ${chatData.hit.detail}</p>`;
-			highlight = !highlight;
+			powerDetail += `<p class="hit alt-highlight"><strong>${game.i18n.localize("DND4E.Hit")}:</strong> ${chatData.hit.detail}</p>`;
 		}
 
 		if (chatData.miss.detail){
-			powerDetail += `<p${highlight? ` class="alt"`: ``}><b>${game.i18n.localize("DND4EBETA.Miss")}:</b> ${chatData.miss.detail}</p>`;
-			highlight = !highlight;
+			powerDetail += `<p class="miss alt-highlight"><strong>${game.i18n.localize("DND4E.Miss")}:</strong> ${chatData.miss.detail}</p>`;
 		}
 
 		if(chatData.postEffect && chatData.effect.detail) {
-			powerDetail += `<p${highlight? ` class="alt"`: ``}><b>${game.i18n.localize("DND4EBETA.Effect")}:</b> ${chatData.effect.detail}</p>`;
-			highlight = !highlight;
+			powerDetail += `<p class="effect alt-highlight"><strong>${game.i18n.localize("DND4E.Effect")}:</strong> ${this.paragraphTrim(chatData.effect.detail)}</p>`;
 		}
 		if(chatData.postSpecial && chatData.special) {
-			powerDetail += `<p${highlight? ` class="alt"`: ``}><b>${game.i18n.localize("DND4EBETA.Special")}:</b> ${chatData.special}</p>`;
-			highlight = !highlight;
+			powerDetail += `<p class="special alt-highlight"><strong>${game.i18n.localize("DND4E.Special")}:</strong> ${chatData.special}</p>`;
 			for (let [i, entry] of Object.entries(chatData.specialAdd.parts)){
 				powerDetail += `<p>${entry}</p>`;
 			}
 		}
 
 		if(chatData.sustain?.actionType !== "none" && chatData.sustain?.actionType) {
-			powerDetail += `<p${highlight? ` class="alt"`: ``}><b>${game.i18n.localize("DND4EBETA.Sustain")} ${CONFIG.DND4EBETA.abilityActivationTypes[chatData.sustain.actionType]}:</b> ${chatData.sustain.detail}</p>`;
+			powerDetail += `<p class="sustain alt-highlight"><strong>${game.i18n.localize("DND4E.Sustain")} ${CONFIG.DND4E.abilityActivationTypes[chatData.sustain.actionType].label}:</strong> ${chatData.sustain.detail}</p>`;
 		}
 
 		if(actorData){
 			powerDetail = this.commonReplace(powerDetail, actorData);
 		}
-
+		
 		return powerDetail;
 	}
 
+	static paragraphTrim(string){
+		// Check if the string starts with <p>
+		if(string.startsWith('<p>')) {
+			// Remove the first occurrence of <p> and </p>
+			string = string.replace(/<p>(.*?)<\/p>/, '$1');
+		}
+		if(string.endsWith('</p>')){
+			// Removes the last four characters if they are '</p>'
+			string = string.slice(0, -4); 
+		}
+		return string;
+	}
 	static _isNumber(str){
 		return /^-?\d+$/.test(str);
 	}
@@ -1030,7 +1171,7 @@ export class Helper {
 			}
 		}
 
-		return game.combat.turns[game.combat.turn].initiative || -1;
+		return game.combat.turns[game.combat.turn]?.initiative || -1;
 	}
 
 	static getTokenIdForLinkedActor(actor){
@@ -1062,37 +1203,72 @@ export class Helper {
 	}
 
 	static getCurrentTurnInitiative(){
-		return game.combat? game.combat.turns[game.combat.turn].initiative : 0;
+		return game.combat? game.combat.turns[game.combat.turn]?.initiative : 0;
 	}
 
+	static async solidifyEffectActorData(effect, parentActor){
+		console.log(effect)
+		console.log(parentActor)
+
+		//dots
+		for(const dot of effect.flags.dnd4e.dots){
+			// dot.amount = await this.parseSolidify(dot.amount, parentActor);
+			dot.amount = dot.amount.replace(/\$solidify\((.*?)\)/g, (match, value) => {
+				return Helper.commonReplace(value, parentActor);
+			});
+		}
+
+		//changes
+		for(const change of effect.changes){
+			// change.value = this.parseSolidify(change.value, parentActor);
+			change.value = change.value.replace(/\$solidify\((.*?)\)/g, (match, value) => {
+				return Helper.commonReplace(value, parentActor);
+			});
+			console.log(change.value);
+		}
+
+	}
+
+	// static async parseSolidify(inputString, parentActor){
+	// 	const newVal =  inputString.replace(/\$solidify\((.*?)\)/g, (match, value) => {
+	// 		return Helper.commonReplace(value, parentActor);
+	// 	});
+	// 	return newVal;
+	// }
+
 	static async applyEffectsToTokens(effectMap, tokenTarget, condition, parent){
+
 		const combat = game.combat;
-		for(let e of effectMap){
+		for(let effect of effectMap){
+			let e = effect.toObject(); // This is to avoid editing the source effect
 			if(e.flags.dnd4e.effectData.powerEffectTypes === condition){
 				for(let t of tokenTarget){
-					// console.log(e)
 					// let effectData = e.data;
 					// e.sourceName = parent.name;
 					e.origin = parent.uuid;
-
+					this.solidifyEffectActorData(e, parent);
 					const duration = e.duration;
 					const flags = e.flags;
 					duration.combat = combat?.id || "None Combat";
 					duration.startRound = combat?.round || 0;
-					flags.dnd4e.effectData.startTurnInit = combat?.turns[combat.turn].initiative || 0;
+					flags.dnd4e.effectData.startTurnInit =	combat?.turns[combat?.turn]?.initiative || 0;
 
 					const userTokenId = this.getTokenIdForLinkedActor(parent);
-					const userInit = this.getInitiativeByToken(this.getTokenIdForLinkedActor(parent));
+					const userInit = this.getInitiativeByToken(userTokenId);
 					const targetInit = t ? this.getInitiativeByToken(t.id) : userInit;
 					const currentInit = this.getCurrentTurnInitiative();
 
 					if(flags.dnd4e.effectData.durationType === "endOfTargetTurn" || flags.dnd4e.effectData.durationType === "startOfTargetTurn"){
 						duration.rounds = combat? currentInit > targetInit ? combat.round : combat.round + 1 : 0;
-						flags.dnd4e.effectData.durationTurnInit = t ? this.getInitiativeByToken(t._id) : userInit;						
+						flags.dnd4e.effectData.durationTurnInit = t ? targetInit : userInit;						
 					}
 					else if(flags.dnd4e.effectData.durationType === "endOfUserTurn" || flags.dnd4e.effectData.durationType === "startOfUserTurn" ){
 						duration.rounds = combat? currentInit > userInit ? combat.round : combat.round + 1 : 0;
 						flags.dnd4e.effectData.durationTurnInit = userInit;
+					}
+					else if(flags.dnd4e.effectData.durationType === "endOfUserCurrent") {
+						duration.rounds = combat? combat.round : 0;
+						flags.dnd4e.effectData.durationTurnInit = combat? currentInit : 0;
 					}
 
 					const newEffectData = {
@@ -1105,6 +1281,7 @@ export class Helper {
 						// duration: {rounds: duration.rounds, startRound: duration.startRound},
 						rounds: duration.rounds,
 						startRound: duration.startRound,
+						statuses: e.statuses,
 						tint: e.tint,
 						flags: flags,
 						changes: e.changes,
@@ -1113,12 +1290,12 @@ export class Helper {
 					let actor;
 					if(t?.actor){
 						actor = t.actor;
-					} else { //extra condition for when actors this linked data target self						
+					} else { //extra condition for when actors this linked data target self
 						actor = parent;
 					}
 
-					if(game.user.isGM){
-						actor.newActiveEffect(newEffectData);
+					if(actor.isOwner || game.user.isGM){
+						await actor.newActiveEffect(newEffectData);
 					} else {
 						game.socket.emit('system.dnd4e', {
 							actorID: actor.id,
@@ -1129,8 +1306,30 @@ export class Helper {
 							effectData: newEffectData
 						});
 					}
+					
+					//console.log(`Effect setup fired for ${e.name} on ${actor.name}.`);
 				}
 			}
+		}
+	}
+
+	static async applyEffectsToTargets(effects, actor){
+		this.applyAllXEffectsToTokens(effects, actor, game.user.targets)
+	}
+
+	/**
+	 * Apply All / Ally / Enemy effects to the selection
+	 *
+	 * @param {EmbeddedCollection} effects The powers effects
+	 * @param {Actor} actor The source actor
+	 * @param {Set} selection the Tokens to apply to
+	 */
+	static async applyAllXEffectsToTokens(effects, actor, selection){
+		if (selection?.size){
+			await this.applyEffectsToTokens(effects, selection, "all", actor);
+			const parentDisposition = actor.token?.disposition || actor.prototypeToken.disposition || null;
+			await this.applyEffectsToTokens(effects, this.filterActorSetByDisposition(selection, parentDisposition), "allies", actor);
+			await this.applyEffectsToTokens(effects, this.filterActorSetByDisposition(selection, parentDisposition, false), "enemies", actor);
 		}
 	}
 
@@ -1148,14 +1347,528 @@ export class Helper {
 		const isModKeyPressed = this.isUsingFastForwardKey(event);
 		return game.settings.get("dnd4e","fastFowardSettings") ? !isModKeyPressed : isModKeyPressed;
 	}
-}
+	
+	/**
+	/* Function to determine the owner of a document - 
+	/* favouring players and falling back to a GM
+	/* (pinched from the 5e system for use in the combat loop)
+	/* Returns the player object, or the player's ID if 
+	/* called with idOnly set to "true"
+	/**/
+	static firstOwner(doc,idOnly=false){
+		// null docs could mean an empty lookup, null docs are not owned by anyone
+		if (!doc) return false;
 
+		//const playerOwners = owners.filter(([id, level]) => (!game.users.get(id)?.isGM && game.users.get(id)?.active) && level === 3).map(([id, level])=> id);
+		let found;
+		
+		//First check for an assigned character
+		game.users.forEach(function (maybePlayer) {
+			if(maybePlayer.character?.id === doc.id){
+				console.log(`Player found: ${maybePlayer.id}`);
+				found = (idOnly ? maybePlayer.id : maybePlayer );
+				return;
+			}
+		});
+		if(found) return found;
+		
+		//If no assigned character, check for specific player owner
+		const owners = Object.entries(doc.ownership);
+		owners.forEach(function (owner){
+			if(owner[0] !== 'default') {
+				let ownerData = game.users?.get(owner[0]);
+				if(!ownerData?.isGM && ownerData.active && owner.level === 3){
+					console.log(`Owner: ${owner[0]}`);
+					owner = ( idOnly ? owner[0] : ownerData );
+					return;
+				}
+			}
+		});
+		if(found) return found;
+
+		// IIf we have no valid player, fall back to first GM
+		const firstGM = game.users.find(u => u.isGM && u.active);
+		return ( idOnly ? firstGM.id : firstGM );
+	}
+	
+	/**
+	 * Function to return the sum of the highest positive value 
+	 * and the lowest negative value in a given set.
+	 * Intended for getting the correct value from multiple 
+	 * resistances and vulnerabilities.
+	 */
+	static sumExtremes(values = []){
+		if (!values.length) return;
+		let negatives = [0], positives = [0];
+		for (let v of values){
+			if (v === 0) continue;
+			if ( v < 0 ){
+				//console.log(`negative: ${v}`)
+				negatives.push(v);
+			} else {
+				//console.log(`positive: ${v}`)
+				positives.push(v);
+			}
+		}
+		return Math.max(...positives) + Math.min(...negatives);
+	}
+
+	/**
+	 * Determine if a fastForward key was held during the given click event.
+	 *
+	 * @param {actorSet} set Actors
+	 * @param {disposition} string disposition value to keep
+	 * @param {same} boolean match based on same or diffrent disposition
+	 * @returns {set} New set of matching disposition
+	 */
+
+	static filterActorSetByDisposition(actorSet, disposition, same=true) {
+		if(disposition === null){
+			return [];
+		}
+		const filteredSet = new Set();
+		for (const actor of actorSet) {
+			if((actor.document?.disposition === disposition) === same) {
+				filteredSet.add(actor);
+			}
+		}
+		return filteredSet;
+	}
+
+	static hasEffects(power, effects) {
+		const foundEffects = power.item.effects.contents.filter(e => effects.includes(e.flags.dnd4e.effectData.powerEffectTypes));
+		return foundEffects.length > 0;
+	}
+	
+	/**
+	 * Use to find the value in a given scale as stored using JavaScript Object Notation.
+	 *
+	 * @param {number} input an input value as a number, usely a character or item level
+	 * @param {object} scale an scale in object format, with keys being the miniume level required for each step
+	 * @param {number} offsetNumber offset value to increase the input to adjust the scale. default value to zero
+	 * @returns {result} New set of matching disposition
+	 */
+	static findKeyScale(input, scale, offsetNumber=0){
+		input-=offsetNumber;
+		let result = 0;
+		// Iterate through the keys of the scale object
+		for (let key in scale) {
+			// Convert key to a number
+			let currentKey = parseInt(key);
+			// Check if input is equal to or higher than current key
+			if (input >= currentKey) {
+				// Check if there's a next key
+				let nextKey = null;
+				for (let next in scale) {
+					let nextNum = parseInt(next);
+					if (nextNum > currentKey) {
+						nextKey = nextNum;
+						break;
+					}
+				}
+				// If there's no next key or input is lower than the next key, assign result
+				if (!nextKey || input < nextKey) {
+					result = scale[key];
+					break;
+				}
+			}
+		}
+		return `${result}`;
+	}
+	
+	/**
+	 * Helper function to convert an initiative with decimal points to a human-friendly round number with tooltip.
+	 * @param {string} initiative			The roll result
+	 * @returns {string|void}
+	 */
+	static initTooltip(init=null){
+		if(!init) return "";
+		
+		try{
+			let rollparts = init.toString().split('.');
+			
+			if(rollparts.length != 2) return init;
+			
+			rollparts[2] = rollparts[1].substr(2,2);
+			rollparts[1] = rollparts[1].substr(0,2);
+			const tiebreaker = game.settings.get("dnd4e", "initiativeDexTiebreaker");
+			let html = `<span class="init-tiebroken" data-tooltip="${game.i18n.localize("DND4EUI.Tiebreaker")}: `;
+			
+			if (tiebreaker === 'system') {
+				html += `[${game.i18n.localize("DND4E.InitiativeScore")}] ${rollparts[1]}, `;
+			} else if (tiebreaker === 'dex') {
+				html += `[${game.i18n.localize("DND4E.AbilityDex")}] ${rollparts[1]}, `;
+			}
+			html += `[${game.i18n.localize("SETTINGS.4eInitTBRand")}] ${rollparts[2]}">${rollparts[0]}</span>`;
+			
+			return html;
+		}catch(e){
+			console.warn(`Failed to create initiative tooltip: ${e}`);
+			return "";
+		}
+	}
+	
+}
 
 export async function handleApplyEffectToToken(data){
 	if(!game.user.isGM){
 		return;
 	}
+	console.log(data)
+	console.log(game.scenes.get(data.scene))
 	const effectData = data.effectData;
 	const actor = data.tokenID ? game.scenes.get(data.scene).tokens.get(data.tokenID).actor : game.actors.get(data.actorID);
 	await actor.newActiveEffectSocket(effectData);
+}
+
+export async function handleDeleteEffectToToken(data){
+	if(!game.user.isGM){
+		return;
+	}
+
+	const actor = data.tokenID ? game.scenes.get(data.scene).tokens.get(data.tokenID).actor : game.actors.get(data.actorID);
+	await actor.deleteActiveEffectSocket(data.toDelete);
+}
+
+export async function handlePromptEoTSaves(data) {
+	//console.log('handler reached');
+	if (game.userId !== data?.targetUser) return;
+	const actor = data.tokenID ? game.scenes.get(data.scene).tokens.get(data.tokenID).actor : game.actors.get(data.actorID);
+	
+	await actor.promptEoTSavesSocket();
+}
+
+export async function handleAutoDoTs(data) {
+	if(!game.user.isGM) return;
+	const actor = data.tokenID ? game.scenes.get(data.scene).tokens.get(data.tokenID).actor : game.actors.get(data.actorID);
+
+	await actor.autoDoTsSocket(data.tokenID);
+}
+
+/* "Contains" Handlebars Helper: checks if a value exists in an array.
+*
+*	@param {String} lunch The value to find
+*	@param {Array} lunchbox The array to search
+*	@param {String} meal (optional) A key to pair with lunch
+*	@returns {boolean} true if lunch exists in lunchbox.
+*	If meal is provided, lunchbox is assumed to contain objects,
+*	and will search for one where meal = lunch.
+*
+*	I don't know why, but meal is apparently the helper object, 
+*	if not given? Not a null, which would have been useful :\
+*	Anyway the type check should take care of it.
+/*																			*/
+Handlebars.registerHelper('contains', function(lunch, lunchbox, meal) {
+	try{
+		if(typeof meal != "string") {
+			if(lunchbox instanceof Set) return lunchbox.has(lunch);
+			return lunchbox.includes(lunch);
+		}
+		const lunchLocation = lunchbox.findIndex((x) => x[meal] == lunch);
+		if(lunchLocation > 0) return true;
+		return false;
+	} catch(err) {
+		console.error("Contains helper spat up. Did you give it the right parameter types?");
+		return false;
+	}
+});
+
+Handlebars.registerHelper("isActor", function(obj) {
+	return obj.isCharacter || obj.isNPC;
+});
+
+Handlebars.registerHelper("isActive", function(effect){
+	return !effect.disabled && !effect.isSuppressed;
+});
+
+Handlebars.registerHelper("getSourceName", function(effect){
+	return effect.sourceName === "Unknown" ? effect.parent.name : effect.sourceName;
+});
+
+Handlebars.registerHelper("needsEffectButton", function(power){
+	return Helper.hasEffects(power, ["all", "allies", "enemies"])
+});
+
+Handlebars.registerHelper("needsHitEffectButton", function(power){
+	return Helper.hasEffects(power, ["hit"])
+});
+
+Handlebars.registerHelper("needsMissEffectButton", function(power){
+	return Helper.hasEffects(power, ["miss"])
+});
+
+Handlebars.registerHelper("needsHitOrMissEffectButton", function(power){
+	return Helper.hasEffects(power, ["hitOrMiss"])
+});
+
+Handlebars.registerHelper("applyEffectsToSelection", function(){
+	return game.settings.get("dnd4e","applyEffectsToSelection")
+});
+
+/* -------------------------------------------- */
+/*	Formatters																	*/
+/* -------------------------------------------- */
+	
+/* -------------------------------------------- */
+
+/**
+ * A helper for using Intl.NumberFormat within handlebars.
+ * @param {number} value		The value to format.
+ * @param {object} options	Options forwarded to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat}
+ * @returns {string}
+ */
+export function formatNumber(value, options) {
+	const formatter = new Intl.NumberFormat(game.i18n.lang, options);
+	return formatter.format(value);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * A helper function to format textarea text to HTML with linebreaks.
+ * @param {string} value	The text to format.
+ * @returns {Handlebars.SafeString}
+ */
+export function formatText(value) {
+	return new Handlebars.SafeString(value?.replaceAll("\n", "<br>") ?? "");
+}
+	
+/* -------------------------------------------- */
+
+/**
+ * A helper to create a set of <option> elements in a <select> block grouped together
+ * in <optgroup> based on the provided categories.
+ *
+ * @param {SelectChoices} choices					Choices to format.
+ * @param {object} [options]
+ * @param {boolean} [options.localize]		 Should the label be localized?
+ * @param {string} [options.blank]				 Name for the empty option, if one should be added.
+ * @param {string} [options.labelAttr]		 Attribute pointing to label string.
+ * @param {string} [options.chosenAttr]		Attribute pointing to chosen boolean.
+ * @param {string} [options.childrenAttr]	Attribute pointing to array of children.
+ * @returns {Handlebars.SafeString}				Formatted option list.
+ */
+function groupedSelectOptions(choices, options) {
+
+	const localize = options.hash.localize ?? false;
+	const blank = options.hash.blank ?? null;
+	const labelAttr = options.hash.labelAttr ?? "label";
+	const chosenAttr = options.hash.chosenAttr ?? "chosen";
+	const childrenAttr = options.hash.childrenAttr ?? "children";
+
+	// Create an option
+	const option = (name, label, chosen) => {
+		if ( localize ) label = game.i18n.localize(label);
+		html += `<option value="${name}" ${chosen ? "selected" : ""}>${label}</option>`;
+	};
+
+	// Create a group
+	const group = category => {
+		let label = category[labelAttr];
+		if ( localize ) game.i18n.localize(label);
+		html += `<optgroup label="${label}">`;
+		children(category[childrenAttr]);
+		html += "</optgroup>";
+	};
+
+	// Add children
+	const children = children => {
+		for ( let [name, child] of Object.entries(children) ) {
+			if ( child[childrenAttr] ) group(child);
+			else option(name, child[labelAttr], child[chosenAttr] ?? false);
+		}
+	};
+
+	// Create the options
+	let html = "";
+	if ( blank !== null ) option("", blank);
+	children(choices);
+	return new Handlebars.SafeString(html);
+}
+
+	/* -------------------------------------------- */
+	
+	/**
+	 * Register custom Handlebars helpers used by 4e.
+	 */
+export function registerHandlebarsHelpers() {
+	Handlebars.registerHelper({
+		getProperty: foundry.utils.getProperty,
+		"DND4E-concealSection": concealSection,
+		"DND4E-dataset": dataset,
+		"DND4E-groupedSelectOptions": groupedSelectOptions,
+		"DND4E-linkForUuid": (uuid, options) => linkForUuid(uuid, options.hash),
+		"DND4E-itemContext": itemContext,
+		"DND4E-numberFormat": (context, options) => formatNumber(context, options.hash),
+		"DND4E-textFormat": formatText
+	});
+}
+	
+	/* -------------------------------------------- */
+	/*	Config Pre-Localization										 */
+	/* -------------------------------------------- */
+	
+/**
+ * Storage for pre-localization configuration.
+ * @type {object}
+ * @private
+ */
+const _preLocalizationRegistrations = {};
+
+/**
+ * Mark the provided config key to be pre-localized during the init stage.
+ * @param {string} configKeyPath					Key path within `CONFIG.DND4E` to localize.
+ * @param {object} [options={}]
+ * @param {string} [options.key]					If each entry in the config enum is an object,
+ *																				localize and sort using this property.
+	* @param {string[]} [options.keys=[]]		Array of localization keys. First key listed will be used for sorting
+	*																				if multiple are provided.
+	* @param {boolean} [options.sort=false]	Sort this config enum, using the key if set.
+	*/
+export function preLocalize(configKeyPath, { key, keys=[], sort=false }={}) {
+	if ( key ) keys.unshift(key);
+	_preLocalizationRegistrations[configKeyPath] = { keys, sort };
+}
+	
+/* -------------------------------------------- */
+
+/**
+ * Execute previously defined pre-localization tasks on the provided config object.
+ * @param {object} config	The `CONFIG.DND4E` object to localize and sort. *Will be mutated.*
+ */
+export function performPreLocalization(config) {
+	for ( const [keyPath, settings] of Object.entries(_preLocalizationRegistrations) ) {
+		const target = foundry.utils.getProperty(config, keyPath);
+		if ( !target ) continue;
+		_localizeObject(target, settings.keys);
+		if ( settings.sort ) foundry.utils.setProperty(config, keyPath, sortObjectEntries(target, settings.keys[0]));
+	}
+
+	// Localize & sort status effects
+	CONFIG.statusEffects.forEach(s => s.name = game.i18n.localize(s.name));
+	// CONFIG.statusEffects.sort((lhs, rhs) =>
+	//	 lhs.id === "dead" ? -1 : rhs.id === "dead" ? 1 : lhs.name.localeCompare(rhs.name, game.i18n.lang)
+	// );
+}
+	
+/* -------------------------------------------- */
+
+/**
+ * Localize the values of a configuration object by translating them in-place.
+ * @param {object} obj			 The configuration object to localize.
+ * @param {string[]} [keys]	List of inner keys that should be localized if this is an object.
+ * @private
+ */
+function _localizeObject(obj, keys) {
+	for ( const [k, v] of Object.entries(obj) ) {
+		const type = typeof v;
+		if ( type === "string" ) {
+			obj[k] = game.i18n.localize(v);
+			continue;
+		}
+
+		if ( type !== "object" ) {
+			console.error(new Error(
+				`Pre-localized configuration values must be a string or object, ${type} found for "${k}" instead.`
+			));
+			continue;
+		}
+		if ( !keys?.length ) {
+			console.error(new Error(
+				"Localization keys must be provided for pre-localizing when target is an object."
+			));
+			continue;
+		}
+
+		for ( const key of keys ) {
+			const value = foundry.utils.getProperty(v, key);
+			if ( !value ) continue;
+			foundry.utils.setProperty(v, key, game.i18n.localize(value));
+		}
+	}
+}
+	
+	/* -------------------------------------------- */
+	/*	Localization																*/
+	/* -------------------------------------------- */
+	
+/**
+ * A cache of already-fetched labels for faster lookup.
+ * @type {Map<string, string>}
+ */
+const _attributeLabelCache = new Map();
+
+/**
+ * Convert an attribute path to a human-readable label.
+ * @param {string} attr							The attribute path.
+ * @param {object} [options]
+ * @param {Actor5e} [options.actor]	An optional reference actor.
+ * @returns {string|void}
+ */
+export function getHumanReadableAttributeLabel(attr, { actor }={}) {
+	// Check any actor-specific names first.
+	if ( attr.startsWith("resources.") && actor ) {
+		const resource = foundry.utils.getProperty(actor, `system.${attr}`);
+		if ( resource.label ) return resource.label;
+	}
+
+	if ( (attr === "details.xp.value") && (actor?.type === "npc") ) {
+		return game.i18n.localize("DND4E.ExperiencePointsValue");
+	}
+
+	if ( attr.startsWith(".") && actor ) {
+		const item = fromUuidSync(attr, { relative: actor });
+		return item?.name ?? attr;
+	}
+
+	// Check if the attribute is already in cache.
+	let label = _attributeLabelCache.get(attr);
+	if ( label ) return label;
+
+	// Derived fields.
+	if ( attr === "attributes.init.total" ) label = "DND4E.InitiativeBonus";
+	else if ( attr === "attributes.ac.value" ) label = "DND4E.ArmorClass";
+	else if ( attr === "attributes.spelldc" ) label = "DND4E.SpellDC";
+
+	// Abilities.
+	else if ( attr.startsWith("abilities.") ) {
+		const [, key] = attr.split(".");
+		label = game.i18n.format("DND4E.AbilityScoreL", { ability: CONFIG.DND4E.abilities[key].label });
+	}
+
+	// Skills.
+	else if ( attr.startsWith("skills.") ) {
+		const [, key] = attr.split(".");
+		label = game.i18n.format("DND4E.SkillPassiveScore", { skill: CONFIG.DND4E.skills[key].label });
+	}
+
+	// Spell slots.
+	else if ( attr.startsWith("spells.") ) {
+		const [, key] = attr.split(".");
+		if ( !/spell\d+/.test(key) ) label = `DND4E.SpellSlots${key.capitalize()}`;
+		else {
+			const plurals = new Intl.PluralRules(game.i18n.lang, {type: "ordinal"});
+			const level = Number(key.slice(5));
+			label = game.i18n.format(`DND4E.SpellSlotsN.${plurals.select(level)}`, { n: level });
+		}
+	}
+
+	// Attempt to find the attribute in a data model.
+	if ( !label ) {
+		const { CharacterData, NPCData, VehicleData, GroupData } = DND4E.dataModels.actor;
+		for ( const model of [CharacterData, NPCData, VehicleData, GroupData] ) {
+			const field = model.schema.getField(attr);
+			if ( field ) {
+				label = field.label;
+				break;
+			}
+		}
+	}
+
+	if ( label ) {
+		label = game.i18n.localize(label);
+		_attributeLabelCache.set(attr, label);
+	}
+
+	return label;
 }

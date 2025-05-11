@@ -1,4 +1,5 @@
 import CustomSkillConfig from "./apps/custom-skill-config.js";
+import { updateApplyEffectsTooltips } from "./chat.js";
 
 export const registerSystemSettings = function() {
 
@@ -71,8 +72,13 @@ export const registerSystemSettings = function() {
 		hint: "SETTINGS.4eInitTBL",
 		scope: "world",
 		config: true,
-		default: true,
-		type: Boolean
+		default: "system",
+		type: String,
+		choices: {
+			"system": "SETTINGS.4eInitTBSys",
+			"dex": "SETTINGS.4eInitTBDex",
+			"random": "SETTINGS.4eInitTBRand"
+		},
 	});
 
 	/**
@@ -88,7 +94,7 @@ export const registerSystemSettings = function() {
 	});
 
 	/**
-	 * Determins if the Advanced Math Options for NPC's is set during their generation
+	 * Determines if the Advanced Math Options for NPCs is set during their generation
 	 */
 
 	game.settings.register("dnd4e", "npcMathOptions", {
@@ -110,6 +116,49 @@ export const registerSystemSettings = function() {
 		scope: "world",
 		config: true,
 		default: false,
+		type: Boolean
+	});
+
+	/**
+	 * Allows the game to use inherent enhancement bonuses to PC's attack, damage and defences.
+	 */
+
+	game.settings.register("dnd4e", "inhEnh", {
+		name: "SETTINGS.4eInhEnhN",
+		hint: "SETTINGS.4eInhEnhL",
+		scope: "world",
+		config: true,
+		default: false,
+		type: Boolean
+	});
+
+
+	/**
+	 * Determs when Death Saving Throws are reset
+	 */
+	game.settings.register("dnd4e", "deathSaveRest", {
+		name: "SETTINGS.4eDeathSaveRestN",
+		hint: "SETTINGS.4eDeathSaveRestL",
+		scope: "world",
+		config: true,
+		default: "short",
+		type: Number,
+		choices: {
+			0: "DND4E.RestShort",
+			1: "DND4E.RestLong",
+			2: "DND4E.RestLongH",
+		}
+	});
+	
+	/**
+	 * Are Effects Automaticly Applied to targets targets upen using powers / attacks
+	 */
+	game.settings.register("dnd4e", "autoApplyEffects", {
+		name: "SETTINGS.4eAutoApplyEffectsN",
+		hint: "SETTINGS.4eAutoApplyEffectsL",
+		scope: "world",
+		config: true,
+		default: true,
 		type: Boolean
 	});
 
@@ -238,6 +287,54 @@ export const registerSystemSettings = function() {
 		default: true,
 		type: Boolean
 	});
+	
+	game.settings.register("dnd4e", "autoDoTs",{
+		name: "SETTINGS.4eAutoDoTsN",
+		hint: "SETTINGS.4eAutoDoTsL",
+		scope: "client",
+		config: true,
+		default: "apply",
+		type: String,
+		choices: {
+			"none": "DND4E.None",
+			"apply": "SETTINGS.4eAutoDoTsApply",
+			"notify": "SETTINGS.4eAutoDoTsNotify"
+		}
+	});
+	
+	game.settings.register("dnd4e", "autoDoTsPublic",{
+		name: "SETTINGS.4eAutoDoTsPublicN",
+		hint: "SETTINGS.4eAutoDoTsPublicL",
+		scope: "world",
+		config: true,
+		default: "all",
+		type: String,
+		choices: {
+			"all": "SETTINGS.4eAutoDoTsPublicAll",
+			"none": "SETTINGS.4eAutoDoTsPublicNone",
+			"pcs": "SETTINGS.4eAutoDoTsPublicPCs"
+		}
+	});
+	
+	game.settings.register("dnd4e", "darkMode",{
+		name: "SETTINGS.4eDarkModeN",
+		hint: "SETTINGS.4eDarkModeL",
+		scope: "client",
+		config: true,
+		default: false,
+		type: Boolean,
+		onChange: foundry.utils.debouncedReload
+	});
+
+	game.settings.register("dnd4e", "applyEffectsToSelection",{
+		name: "SETTINGS.4eApplyEffectsToSelectionN",
+		hint: "SETTINGS.4eApplyEffectsToSelectionL",
+		scope: "client",
+		config: true,
+		default: false,
+		type: Boolean,
+		onChange: updateApplyEffectsTooltips
+	});
 
 	game.keybindings.register("dnd4e", "permShowPlayer", {
 		name: game.i18n.localize("SETTINGS.4epermShowPlayerN"),
@@ -266,4 +363,17 @@ export const registerSystemSettings = function() {
 	// 	],
 	// 	precedence: CONST.KEYBINDING_PRECEDENCE.NORMAL,
 	// });
+	
+	game.settings.register("dnd4e", "cardAtkDisplay",{
+		name: "SETTINGS.4eCardAtkDisplayN",
+		hint: "SETTINGS.4eCardAtkDisplayL",
+		scope: "client",
+		config: true,
+		default: "stat",
+		type: String,
+		choices: {
+			"bonus": "SETTINGS.4eCardAtkDisplayBonus",
+			"stat": "SETTINGS.4eCardAtkDisplayStat"
+		}
+	});
 };

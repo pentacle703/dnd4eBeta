@@ -4,9 +4,9 @@ export class CustomRolldDescriptions extends DocumentSheet4e {
 	
 	static get defaultOptions() {
 		const options = super.defaultOptions;
-		return mergeObject(options, {
+		return foundry.utils.mergeObject(options, {
 			id: "custom-roll",
-			classes: ["dnd4eBeta", "actor-rest"],
+			classes: ["dnd4e", "actor-rest"],
 			template: "systems/dnd4e/templates/apps/custom-roll-descriptions.html",
 			width: 500,
 			closeOnSubmit: false,

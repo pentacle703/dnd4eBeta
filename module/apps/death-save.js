@@ -4,9 +4,9 @@ export class DeathSaveDialog extends DocumentSheet4e {
 
 	static get defaultOptions() {
 		const options = super.defaultOptions;
-		return mergeObject(options, {
+		return foundry.utils.mergeObject(options, {
 			id: "death-save",
-			classes: ["dnd4eBeta", "actor-death-save"],
+			classes: ["dnd4e", "actor-death-save"],
 			template: "systems/dnd4e/templates/apps/death-save.html",
 			width: 500,
 			closeOnSubmit: true

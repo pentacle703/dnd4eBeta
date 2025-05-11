@@ -1,7 +1,339 @@
 # Changelog
 
+## Version 0.5.15
+- Fix issue with "Only Apply Effect when Equipped?" option not working correctly.
+- Tool-tip for the apply active effects button on Power chat messages should now properly refrence.
+
+## Version 0.5.14
+- [PR #421](https://github.com/EndlesNights/dnd4eBeta/pull/421) from [FoxLee](https://github.com/FoxLee)
+  - I'm an idiot who uploads files to the wrong place
+
+## Version 0.5.13
+- [PR #420](https://github.com/EndlesNights/dnd4eBeta/pull/420) from [FoxLee](https://github.com/FoxLee)
+  - Fix for core issue https://github.com/foundryvtt/foundryvtt/issues/11527 (fixes #419 and another report I had on Discord of heritage bonuses not stacking correctly). Looks like Foundry intends to fix this only in v13, so I stole this temporary fix from [Black Flag](https://github.com/koboldpress/black-flag/commit/d816b843d6702b0d5cecbdcfc765918002394b4e#diff-be8a125e28ef90b1367be003410b96d6e74779a15771b893370e4b260422d375), blessings upon them.
+
+## Version 0.5.12
+- [PR #408](https://github.com/EndlesNights/dnd4eBeta/pull/408) from [draconas1](https://github.com/draconas1) Fix: Token Size not being updated
+- [PR #409](https://github.com/EndlesNights/dnd4eBeta/pull/409) from [lderequesensS](https://github.com/lderequesensS) Add Spanish translation
+- [PR #412](https://github.com/EndlesNights/dnd4eBeta/pull/412) from [FoxLee](https://github.com/FoxLee)
+  - Allows dice notation in ongoing damage values and enhances chat reports for them
+  - Adds special "bonus" keys for `floor`, `ceil` and `override` to allow advanced manipulation of values, and updates documentation accordingly
+  - Adds swim speed to movement modes
+  - Adds chat popout functionality to item cards (fixes [#266](https://github.com/EndlesNights/dnd4eBeta/issues/266))
+  - In character sheets, fixes an untranslated string on the action point checkbox (mentioned in [PR #409](https://github.com/EndlesNights/dnd4eBeta/pull/409)).
+- [PR #415](https://github.com/EndlesNights/dnd4eBeta/pull/415) from [FoxLee](https://github.com/FoxLee) Fixes [object Object] appearing in on-sheet item summaries (fixes [#414](https://github.com/EndlesNights/dnd4eBeta/issues/414)) and updates info tags to include more useful properties and fewer irrelevant ones
+
+## Version 0.5.11
+- ruler refactor, no longer runs though libwrapper. Now is the overrides the default Canvas.rulerClass
+- PR #406 from [squagnar](https://github.com/squagnar) added Check weaponInnerData exists when checking for proficiency
+- PR #407 from [FoxLee](https://github.com/FoxLee) Proficiency logic tweak, melee/ranged basic distinctions added
+
+## Version 0.5.10
+- temp fix for issue #400, disabled check for difficult terrain on gridless maps 
+- fix issue #389, the built in effect for second now properly applies duration for combat.
+- fix issue #386, cleared a flag that was being set to help the system specific templates. The square measure template should function normally again.
+
+## Version 0.5.9
+- [PR 405](https://github.com/EndlesNights/dnd4eBeta/pull/405) from [draconas1](https://github.com/draconas1) Fix: right click Apply Damage/Healing not working 
+
+## Version 0.5.8
+- [PR 404](https://github.com/EndlesNights/dnd4eBeta/pull/404) from [FoxLee](https://github.com/FoxLee)
+  - Fixes a bug where attack rolls from creatures with a global attack bonus throw an error; this was due to a mistake where weapon proficiency was checked even for powers with "none" weapon requirement.
+  - Fixes the bug causing defences of NPCs not using advancedCals to be much too high.
+  - Updates NPC sheet to display current defence values alongside base values.
+  - Fixes an "object Object" dropdown in equipment limited use intervals (#401)
+  - Updates initiative tiebreaker to a selection between init mod (system), dex score (houserule), or random.
+  - Masks decimal places in initiative scores (in roll chat output and in combat tracker), hopefully preventing people from thinking they are in error. Tiebreaker info remains viewable in tooltips and in roll formulae.
+
+## Version 0.5.7
+- [PR 399](https://github.com/EndlesNights/dnd4eBeta/pull/399) from [FoxLee](https://github.com/FoxLee)
+	- Resolves a problem with initiative where perfect ties could cause incorrect effect expiry
+	- Adds "proficient" bonus key and detection, and improves key application for powers with "any" weapon/implement usage
+	- Activates bonus typing for saving throws and adds appropriate migration
+   
+## Version 0.5.6
+- Hotfix for a bug with situational bonus value #398 
+
+## Version 0.5.5
+- Many fixes [PR 393](https://github.com/EndlesNights/dnd4eBeta/pull/393) from [FoxLee](https://github.com/FoxLee)
+	- Updated references to certain properties in the damage rolled from chat cards (fixes #390). I also changed the fallback behaviour for unspecified damage, which seemed like it should use physical instead of true damage.
+	- Updated references to certain properties in active effect config (Fixes #383)
+	- Added new logic for bonus keys based on the defence targeted by a power (as suggested by absolitude on the Discord). Yay for low-hanging fruit! :p
+	- Since the v12 editions expand many single-string configs into objects, I took the liberty of adding short and abbreviated labels to ability action types (eg. "Standard" vs. "Standard Action" and "STD."). Also added strings accordingly in the EN and AN-AU lang files, and corrected some mistakes in strings for auto-apply effect settings.
+	- Updated various templates to newer Handlebars. (Not actually required until v14, but I got sick of so many warnings so I got rid of some easy ones while I was working on nearby stuff.)
+	- Increased the height of the description field in active effects config form, to make it a bit more usable (also suggested by absolitude on the Discord).
+		- Addtioanl Change was made so the height should scale with addtional space within the form as it is scaled.
+
+	- Changed effect suppression logic on equipment, which was excluding effects without Actor sources, instead of effects without item sources. (Fixes #387).
+	- Fixed custom skills hook as suggested by ddbrown30 (Fixes #391)
+	- Enabled that "global skill modifier" field that's been floating around on character sheets for a while. (Includes a migration script, so that will need to be activated once merged.)
+
+	- Added a global defences modifier, on the basis that while it's not too hard to add bonuses to four defences manually, it does come up _really_ frequently so it would probably be appreciated. It's compared to the bonus types for individual defences, so should respect 4e stacking rules.
+	- Added an "isBasic" property for attacks, which can be targeted with the "basic" bonus key. I meant to add a marker on the power listing as well, but I forgot. I _did_ also update Steve and the SRD powers compendium, I just haven't uploaded them yet because uploading "packs" is a PITA now and if I untangle the global attack/damage bonus types issue before I'm done on this tear, they'll need updates again anyway.
+	
+- Many fixes [PR 396](https://github.com/EndlesNights/dnd4eBeta/pull/396) from [FoxLee](https://github.com/FoxLee)
+	- Updated custom effect handling to apply type stacking rules to global atk/dmg bonuses
+	- Removed `@atkMod` and`@dmgMod` from default formulae, and updated migration to remove them from existing powers.
+	- Updated ongoing damage automation. GM account perform all ongoing damage logic.
+	- Updated document owner detection to prioritise an assigned player before checking owner permissions. This solves an issue I ran into where it would always fall back to a GM if player ownership is all default, even there was a currently assigned player.
+	
+- css fix encumbrance bar height
+- Rework active effect tooltip on character sheets to show description text.
+- fixed issue that was causing Automated Animations to hang up
+
+- updated French Language courtesy of [Gilphe](https://github.com/Gilphe)
+
+## Version 0.5.4
+- Added healing option of 'Cost Healing Surge" option to healing. This can be used in examples such as with healing potions which take a healing surge,  but only grant a flat amount of hitpoints. When rolling you can manually include this amount with the tag `[surgeCost]`, this still expand a surge on the take when applied.
+- fixed an issue where the current HP value on character sheets would lock from active effects
+
+## Version 0.5.3
+- fixed handlebars issue for selectOptions of Resource Consumption 
+
+## Version 0.5.2
+- fix issue where grid distance was not being used properly by ruler
+
+## Version 0.5.1
+- fixed handlebars issue when opening equipment, (added a null type check)
+- fixed an issue where item types where being deleted when created on actors 
+
+## Version 0.5.0
+- comparability for Foundry v12
+- added support for Difficult Terrain regionBehaviorType, which can be used to display areas of Difficult Terrain to players, as well as influence the distance displayed by the ruler tools.
+- Added Blast button to template Measurement Controls panel
+- Added custom icons for Bust and Blast to template Measurement Controls panel
+
+## Version 0.4.58
+- Fixed DoTs from transferred effects [PR 373](https://github.com/EndlesNights/dnd4eBeta/pull/373) from [wigmeister2000](https://github.com/wigmeister2000)
+- Another fix of Inherent Enhancements [PR 372](https://github.com/EndlesNights/dnd4eBeta/pull/372) from [FoxLee](https://github.com/FoxLee)
+
+- ## Version 0.4.57
+- fixed issue with default sorting not being working properly, which caused issues with types of item documents being created on actors.
+
+- added missing keyword "Shadow"
+- minor CSS changes,
+	- edit to power rich editor for effect text 
+	- change to power card highlighting, every element now contains the css class `alt-highlight` which will alternate highlighting
+	- minor change to how effect html rich text is combined into the power cards <p class="effect"> element, with the first paragraph <p> element being merged together as to not create unintended spaces and highlighting
+
+## Version 0.4.56
+- added error checking to ActorSheet4e#_onConvertCurrency incase of undefined value
+
+## Version 0.4.55
+- update to french lang
+- Minor change to CSS selector, making item card class selectors slightly more specific as to cause destructive interference with modules. (spesificly fixed an issue with Monks Enhanced Journal)
+- added tool-tip label to currency that displays sum of coins value in relation to GP
+
+## Version 0.4.54
+- Fixed inherent enhancement, for real this time.
+- Fixed CSS/HTMl for Equipment Sheets Damage Resistances & Immunity + Enhancement overlap spacing fix
+- change tabs on Item-Sheets should now resize the height correctly. Updating the sheet should no long effect the the height of the sheet.
+
+## Version 0.4.53
+- minor html/css tweak to rework Attack Roll chat messages
+- [PR 357](https://github.com/EndlesNights/dnd4eBeta/pull/357) from [FoxLee](https://github.com/FoxLee)
+	- [Added 2024-05-25] Un-broke how I broke enhancement bonuses when inherent bonuses are off.
+	- Corrects an oversight where res/vuln could have crossed 0 on the number line and messed things up
+	- Exposes the priority of changes within effects for user management; allows for correct timing of (for example) penalties on upgrade effects.
+	- Updates the Manual compendium to discuss change modes and priority with examples (and info about defaults required for correct timing)
+	- Adds "Action (modern)" as a power grouping method on character sheets; it's a simplified (MM3-esque) grouping that's like Action, but bundles all triggered actions together. (Sorry, this is new functionality and I should have kept it separate from the fixes, but working in the same files made it hard to separate out).
+
+## Version 0.4.52
+- Added global skill bonus which can be acsessed by active effects at `@system.modifiers.skills.<type>`
+- fixed some missing i18n
+- minor CSS fix
+- Refactors for TAH integration [PR 356](https://github.com/EndlesNights/dnd4eBeta/pull/356) from [draconas1](https://github.com/draconas1)
+
+- [PR 355](https://github.com/EndlesNights/dnd4eBeta/pull/355) from [FoxLee](https://github.com/FoxLee)
+	- Updated handling of resistances (#327). The `value` property is now derived from two other properties, `res` and `vuln`. Effects should be directed to modify these properties instead of `value` and respect apply modes. Effects using other keys (like the 4e bonus types) should be updated by the user, but if any are still found they are filtered into `res` or `vuln` based on if they are positive or negative. Manual bonuses (as in, entered through the sheet) are all applied as-is.
+	- Added inherent enhancement bonuses as a game-wide setting (#88). When it's on, the calcs for defences, attack and damage will check against the scaling bonuses suggested in the PHB2/Darksun books and override the existing bonus if it's too low. (PCs only)
+	- Updated equipment model/sheet to separate out enhancement bonuses from non-magical bonuses. Non-magical bonuses and other armour properties are now hidden on non-armour items, and an enhancement bonus section appears for armour and neck items.
+	- I found the migration scripts! So I've included one to add the new properties to older items/actors. It will also look for neck "armour" items with identical fort/ref/will values, and move the shared value to "enhance" instead.
+	- Added "shield" as a bonus type to the template for all defences. The mundane bonuses to defences on shield-typed equipment are now re-routed to this property instead of "armour". (#344)
+	- Added "none" weapon hand option (for slotless implements) (#354)
+	- Plugged the auto-generated power summaries on character sheets into the same "enrichment" function that the description field uses in manual descriptions, in order to benefit from variable substitution and calculation. Astonishingly, it appears to work without issue.
+	- Added a bonus key for one-handed weapons (#353) and updated documentation to include it.
+	- Added the kusari-gama to the base weapons list, which I previously left out for some reason.
+	- Updated Steve, the SRD features compendium, and the Manual compendium accordingly.
+
+## Version 0.4.51
+- Added new durationType `endOfUserCurrent`
+
+## Version 0.4.50
+- changed enhance and enhance implment fields on weapon item cards to accept strings.
+
+## Version 0.4.49
+- added offset option for scale
+
+## Version 0.4.48
+- added common replace helper `@sneak`, which will return the number of dice needed for sneak attack based on character tier.
+- added common replace helper `@scale`, which is a common scale used by many class features that increments at level 6, 11, 16, 21, and 26.
+- added weapon/armour Proficiency to SRD classes and races using active effect keys of `system.details.armourProf.value` and `system.details.weaponProf.value`
+- Fix item dragging to macro hotbar. You should now once more be able to drag Items, Powers from an actor sheet to create usable/rollable macro button.
+- You can now drag and drop Active Effects from actor sheets to the macro bar. This will create a toggle macro. 
+- minor CSS fixes
+- Option to display calculated attack bonus in auto power cards [PR 352](https://github.com/EndlesNights/dnd4eBeta/pull/352) from [FoxLee](https://github.com/FoxLee) 
+
+
+## Version 0.4.47
+- minor CSS fixes to Power Item Details tab & Actor power table
+- minor fix to localization text.
+- other minor fixes from [PR 351](https://github.com/EndlesNights/dnd4eBeta/pull/351) from [wigmeister2000](https://github.com/wigmeister2000) 
+	- An empty tooltip showed up when the effect description was empty. This should be suppressed now.
+	- The "apply effects to selected tokens" option in the settings did nothing. This should now toggle between selected and targeted tokens.
+	- When adding "apply to all targets" effects, they showed up in the misc section.
+
+## Version 0.4.46
+- added misc option for Active Effects
+- minor CSS fix to Power Item Details tab
+- weapon type and category fixes [PR 350](https://github.com/EndlesNights/dnd4eBeta/pull/350) from [FoxLee](https://github.com/FoxLee) 
+
+## Version 0.4.45
+- fixed minor bug where container item sheets could not be opened in compendiums
+- Edited CSS to better center non square image icons for Player Character, and Non Player Character actor sheets, along with item profile icons.
+- minor CSS fix item card buttons 
+
+## Version 0.4.44
+- Added right Click apply effect options on power card categorized by type.
+- Added Effects drop down menu on power cards for manually application of effects
+- fixed minor issue where effect duration labels would not localize properly on setup.
+- When creating items within the directory, the default new name should be based on the item type, rather than just be "New Item" 
+- similar consumable items with the same source
+- removed all references to word beta
+- renamed file `entity.js` to `item-document.js`
+- renamed file `sheet.js` to `item-sheet.js`
+- added additional layer of sorting, elements that are sorted can further be manually sorted
+- Overhaul to backpack / Container Items. Can now contain sub items, currency and ritual ingredients.
+- The details tabs of all item types now support GM Notes. GM Notes are only visible to users with the GM user account.
+- Added `AutoApplyEffects` setting to game system. Set to true by default. While turned on, Active Effects will be applied automatically to targets or self when Powers / Attacks are made (as they currently were). While turned off, Active Effects will not be applied automatically to any tokens.
+- Added diffrent icons for all item types
+- Added /text option to text helper function. Checks if value in the inline roll is isDeterministic and returns as plain text rather than in a <a> tag
+- fix to chat power card html [PR 347](https://github.com/EndlesNights/dnd4eBeta/pull/347) from [FoxLee](https://github.com/FoxLee) 
+
+## Version 0.4.43
+- Minor fix to application of active effects. If a player is the owner of the token / actor, it will no longer require use the socket to apply the effect. 
+
+## Version 0.4.42
+- Fix suppression of transferred effects [PR 338](https://github.com/EndlesNights/dnd4eBeta/pull/338) from [wigmeister2000](https://github.com/wigmeister2000)
+- Attack bonus tooltips [PR 339](https://github.com/EndlesNights/dnd4eBeta/pull/339) from [wigmeister2000](https://github.com/wigmeister2000)
+- Fix locilisation for Light Mace, was usinincoreccetly using the mace key.
+
+## Version 0.4.41
+- Disable input fields if indirectly modified [PR 336](https://github.com/EndlesNights/dnd4eBeta/pull/336) from [wigmeister2000](https://github.com/wigmeister2000)
+- Fixing typo in "invisible"
+
+## Version 0.4.40
+- fix issue where chat card preview would not generate with macros in text.
+- ActiveEffects access to @bloodied [PR 334](https://github.com/EndlesNights/dnd4eBeta/pull/334) from [wigmeister2000](https://github.com/wigmeister2000)
+
+## Version 0.4.39
+- Chat cards check for roll [PR 332](https://github.com/EndlesNights/dnd4eBeta/pull/332) from [wigmeister2000](https://github.com/wigmeister2000)
+- `race` bonuses suffixes for specific bonuses many actor attributes. This should now be the primary keys used while setting up active effects.
+
+## Version 0.4.38
+- Effect application from chat card [PR 331](https://github.com/EndlesNights/dnd4eBeta/pull/331) from [wigmeister2000](https://github.com/wigmeister2000)
+- minor fix to NPC defence calculation
+
+## Version 0.4.37
+## Version 0.4.36
+## Version 0.4.35
+## Version 0.4.34
+- hotfix to migration
+
+## Version 0.4.33
+- Added in options to use `item`, `feat`, `power`, and `untyped` suffixes for specific bonuses many actor attributes. This should now be the primary keys used while setting up active effects.
+- Moved skill training tracking out of `skills#value` to `skills#training`
+- added `#skillTraining` to the actor template, which can be used to modify skills based on training level. The Jack of All Trades feat can be implemented now with a single effect attribute key of `system.skillTraining.untrained.feat` and a value of `2` 
+- fix minor issue on npc sheet #328
+- fix Bonus processing for v11 ActiveEffects [PR 329](https://github.com/EndlesNights/dnd4eBeta/pull/329) from [wigmeister2000](https://github.com/wigmeister2000)
+- Minor update to Steve!
+
+## Version 0.4.32
+- Fix actor sheet effects tab for v11 ActiveEffects transfer [PR 326](https://github.com/EndlesNights/dnd4eBeta/pull/326) from [wigmeister2000](https://github.com/wigmeister2000)
+- Fix to speed data-tooltip formating
+
+## Version 0.4.31
+- Additional effect transfer options and "To Chat" context option for items [PR 323](https://github.com/EndlesNights/dnd4eBeta/pull/323) from [wigmeister2000](https://github.com/wigmeister2000)
+
+## Version 0.4.30
+- await Effect Creation
+
+## Version 0.4.29
+- CN lang update
+- Improvements for Active effect statuses [PR 319](https://github.com/EndlesNights/dnd4eBeta/pull/319) from [FoxLee](https://github.com/FoxLee)
+- Fix chat card posting and effect transfer [PR 320](https://github.com/EndlesNights/dnd4eBeta/pull/320) from [wigmeister2000](https://github.com/wigmeister2000)
+- fix to user apply socket effects
+- minor CSS fix
+- NPC chat card template updates [PR 321](https://github.com/EndlesNights/dnd4eBeta/pull/321) from [FoxLee](https://github.com/FoxLee)
+
+
+## Version 0.4.28
+- custom skills now should be sorted alphabetically.
+- Added a tooltip to the new "show image" button on item's portrait.
+- added icon for unprepared powers.
+- [PR 317](https://github.com/EndlesNights/dnd4eBeta/pull/317) from [FoxLee](https://github.com/FoxLee)
+
+
+## Version 0.4.27
+- hot fix CSS issue where item equipment toggle was accidentally removed.
+
+## Version 0.4.26
+- Added descriptions to all status effects
+- Added Options for when Death Saves can reset, with default now correctly being short rests
+- Additional Effect Application to All Allies, All Enemies, or self dependent on hit/miss of other targets
+- fix some edge case issues were effects would not apply.
+- new effects created on objects will use the objects img for default image
+
+- [PR 316](https://github.com/EndlesNights/dnd4eBeta/pull/316) from [FoxLee](https://github.com/FoxLee)
+	- Darkmode
+	- template files cleaned up
+	- revised CSS files
+	- revised character sheet item description toggle to respect description/chat flavour/auto generate combination as per chat card generation. This prevents both the description and chat flavour being output when auto-generate cards is on.
+	- revised character and item sheets, I've updated the HTML fields to use ProseMirror as the editor. This is because TinyMCE uses iframes (which prevent styling) and therefore really messes up dark mode.
+
+	- disabled inputs show a "disabled" cursor on hover.
+	- NPC sheet revised upper section to better match the style of PC sheets and prioritise information used during combat. This includes converting the "advanced maths" checkbox to a button in the header.
+	- added translatable strings for the names of sheets and item types. Foundry was excepting these and defaulting to IDs when it didn't find them, which just made things seem a bit haphazard.
+
+## Version 0.4.25
+- [PR 314](https://github.com/EndlesNights/dnd4eBeta/pull/314) from [FoxLee](https://github.com/FoxLee)
+	- Restored lost hint text for how to select multiple damage types on ongoing damage.
+	- Fixed a bug reported on Discord by Milo & Marcloure: effects could sometimes be removed even on a failed save, if a saving throw bonus was present.
+	- Added the ability to use variables in "amount" value for ongoing damage/regen (issue #311).
+	- Updated the Manual & Help Compendium—mostly for the sake of adding a section about ongoing damage, but while I was there I made a bunch of smaller updates and typo fixes too. Please see the commit for more details!
+	- Removed (most) inline formatting from the Manual and added it as default journal CSS instead, with the goal of making the manual a lot more friendly to journal enhancements.
+	- Added a tooltip to the new "show image" button on an actor's portrait.
+
+## Version 0.4.24
+- hotfix [PR 312](https://github.com/EndlesNights/dnd4eBeta/pull/312) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.4.23
+- Added button that appears when hovering the image on a Player and NPC character sheet. This button opens ups up the image in a ImagePoput frame.
+- With at least observation permissions of an actor, be able to view item summary when clicking on name
+- Fixed error with ongoing damage [PR 310](https://github.com/EndlesNights/dnd4eBeta/pull/3108) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.4.22
+- Active Effect apply status effects correctly
+- Added addtional null checks into `turns.js`, so the turn tracker should no longer get stuck if an actor becomes unlinked from a combatant / token
+- Regeneration as DoTs + settable effect save DCs [PR 308](https://github.com/EndlesNights/dnd4eBeta/pull/308) from [FoxLee](https://github.com/FoxLee)
+
+## Version 0.4.21
+- Auto saves and DOTs [PR 304](https://github.com/EndlesNights/dnd4eBeta/pull/304) from [FoxLee](https://github.com/FoxLee)
+- added Right-CLick context menu to items on a character sheet, which allow for an number of options, including a easy duplicating.
+- added Right-Click context menu to active Effects on character sheet, which allow for an number of options, including a easy duplicating.
+- Fix minor bug where the CSS for the placeholder text of an unprepared powers charges was showing an incorrect color.
+- Fix an issue where an unprepared power would show "0/" charges even if the power did not have any charges
+- Fix an issue where items sheets would resize upon being moved around.
+- changed `target-id` to `data-target-id` as per proper html attribute naming convention 
+
+## Version 0.4.20
+- Fix to merge error where part of [PR 302](https://github.com/EndlesNights/dnd4eBeta/pull/302) from [FoxLee](https://github.com/FoxLee) was not merged correctly. (my bad -Endles)
+
+## Version 0.4.19
+- Added socket for users to delete active effects
+
 ## Version 0.4.18
-- Automated saving throw dialogues [merge](https://github.com/EndlesNights/dnd4eBeta/pull/302) from [FoxLee](https://github.com/FoxLee)
+- Automated saving throw dialogs [merge](https://github.com/EndlesNights/dnd4eBeta/pull/302) from [FoxLee](https://github.com/FoxLee)
 
 ## Version 0.4.17
 - Change to how Skill Labels work, allowing for the value to be manly set or overridden on an individual actor.
@@ -12,7 +344,7 @@
 
 ## Version 0.4.15
 - Input fields that are being modified by Active Effects are now disabled and will display a tool tip warning explaining why they are disabled
-- Added DocumentSheet4e wichh extended from DocumentSheet. Enabled the above mentioned input field locking with active effects for Document Sheets
+- Added DocumentSheet4e which extended from DocumentSheet. Enabled the above mentioned input field locking with active effects for Document Sheets
 - Added a pointer to the encumbrance CSS, so it is more apparent that it may be clicked on.
 - Replaces all html "title" tags with "data-tooltip"
 - When hovering Hit Points, will show a cog icon to indicate that to users that clicking is a configurable options
@@ -31,7 +363,7 @@
 - Brazilian Portuguese from [PilotodeMouse](https://github.com/PilotodeMouse)
 
 ## Version 0.4.12
-- renamed `clickRollMessageDamageChatListener` function to `chatMessageListener` as it will be more genericly used.
+- renamed `clickRollMessageDamageChatListener` function to `chatMessageListener` as it will be more generically used.
 - moved the chat listener for the hover over and clicking of token names within attack result chat box out of their own wrapped listen into generic listener. This resolved an issue where the listener would not always be added correctly upon message creation. 
 
 ## Version 0.4.11

@@ -4,16 +4,16 @@ import DocumentSheet4e from "./DocumentSheet4e.js"
 export class EncumbranceDialog extends DocumentSheet4e {
 	static get defaultOptions() {
 		const options = super.defaultOptions;
-		return mergeObject(options, {
+		return foundry.utils.mergeObject(options, {
 			id: "encumbrance-dialog",
-			classes: ["dnd4eBeta", "encumbrance-dialog"],
+			classes: ["dnd4e", "encumbrance-dialog"],
 			template: "systems/dnd4e/templates/apps/encumbrance-dialog.html",
 			width: 420,
 			closeOnSubmit: false
 		});
 	}
 	get title() {
-		return `${this.object.name} - Movement Speed Dialog`;
+		return `${this.object.name} - ${game.i18n.localize( "DND4E.Encumbrance")}`;
 	}
 
 	/** @override */

@@ -2,7 +2,7 @@
 
     <!-- Effect Header -->
     <header class="sheet-header">
-        <img class="effect-icon" src="{{ data.icon }}" data-edit="icon">
+        <img class="effect-icon" src="{{ data.img }}" data-edit="img">
         <h1 class="effect-title">
             <input name="name" type="text" value="{{data.name}}" placeholder="{{ localize 'Name' }}"/>
         </h1>
@@ -16,16 +16,16 @@
     </nav>
 
     <!-- Details Tab -->
-    <section class="tab" data-tab="details">
+    <section class="tab details" data-tab="details">
 
         <div class="form-group">
-            <label>{{ localize "EFFECT.IconTint" }}</label>
+            <label>{{ localize "EFFECT.Tint" }}</label>
             <div class="form-fields">
                 {{colorPicker name="tint" value=data.tint}}
             </div>
         </div>
 
-        <div class="form-group stacked">
+        <div class="form-group stacked editor {{#if powerParent}}extended{{/if}}">
             <label>{{ localize "EFFECT.Description" }}</label>
             {{editor descriptionHTML target="description" button=false editable=editable engine="prosemirror" collaborate=false}}
         </div>
@@ -46,7 +46,7 @@
 
         {{#if isItemEffect}}
         <div class="form-group">
-            <label>{{localize 'DND4EBETA.EffectWhenEquipped'}}?</label>
+            <label>{{localize 'DND4E.EffectWhenEquipped'}}?</label>
             <div class="form-fields">
                 <input type="checkbox" name="flags.dnd4e.effectData.equippedRec" data-dtype="Boolean" {{checked effect.flags.dnd4e.effectData.equippedRec}}/>
             </div>
@@ -62,7 +62,7 @@
 
         {{#if powerParent}}
         <div class="form-group">
-            <label>{{localize 'DND4EBETA.EffectApply'}}:</label>
+            <label>{{localize 'DND4E.EffectApply'}}:</label>
             <div class="form-fields">
                 <select name="flags.dnd4e.effectData.powerEffectTypes">
                     {{#select effect.flags.dnd4e.effectData.powerEffectTypes}}
@@ -81,15 +81,21 @@
     <!-- Duration Tab -->
     <section class="tab" data-tab="duration">
         <div class="form-group">
-            <label>{{ localize "DND4EBETA.DurationType" }}</label>
-            <select name="flags.dnd4e.effectData.durationType">
-                {{#select effect.flags.dnd4e.effectData.durationType}}
-                <option value=""></option>
-                {{#each config.durationType as |label type|}}
-                <option value="{{type}}">{{label}}</option>
-                {{/each}}
-                {{/select}}
-            </select>
+            <label>{{ localize "DND4E.DurationType" }}</label>
+            <div class="form-fields">
+					<select class="durationType refreshes" name="flags.dnd4e.effectData.durationType">
+						 {{#select effect.flags.dnd4e.effectData.durationType}}
+						 <option value=""></option>
+						 {{#each config.durationType as |label type|}}
+						 <option value="{{type}}">{{label}}</option>
+						 {{/each}}
+						 {{/select}}
+					</select>
+					{{#if (eq effect.flags.dnd4e.effectData.durationType "saveEnd")}}
+						  <label>{{ localize "DND4E.AbbreviationDC" }}</label>
+						  <input type="text" class="number saveDC" name="flags.dnd4e.effectData.saveDC" value="{{#if effect.flags.dnd4e.effectData.saveDC}}{{ effect.flags.dnd4e.effectData.saveDC }}{{else}}10{{/if}}" placeholder="10" data-dtype="number" />
+					{{/if}}
+				</div>
         </div>
         <div class="form-group">
             <label>{{ localize "EFFECT.DurationSecs" }}</label>
@@ -137,10 +143,13 @@
 
     <!-- Effects Tab -->
     <section class="tab" data-tab="effects">
+	 
+		  <h3 class="subsection">{{ localize "DND4E.ModifierPlural" }}</h3>
         <header class="effect-change effects-header flexrow">
             <div class="key">{{ localize "EFFECT.ChangeKey" }}</div>
             <div class="mode">{{ localize "EFFECT.ChangeMode" }}</div>
             <div class="value">{{ localize "EFFECT.ChangeValue" }}</div>
+            <div class="priority">{{ localize "EFFECT.Priority" }}</div>
             <div class="effect-controls">
                 <a class="effect-control" data-action="add"><i class="far fa-plus-square"></i></a>
             </div>
@@ -159,12 +168,108 @@
                 <div class="value">
                     <input type="text" name="changes.{{i}}.value" value="{{change.value}}"/>
                 </div>
+                <div class="priority">
+                    <input type="text" name="changes.{{i}}.priority" data-dtype="Number" value="{{change.priority}}"/>
+                </div>
                 <div class="effect-controls">
                     <a class="effect-control" data-action="delete"><i class="fas fa-trash"></i></a>
                 </div>
             </li>
             {{/each}}
         </ol>
+		  
+		  <br />
+		  
+			<!-- Status conditions attached to this effect -->
+			<h3 class="subsection">{{localize 'DND4E.StatusConditions'}}</h3>
+			<header class="effect-status effects-header flexrow">
+            <div class="status-select">Status</div>
+            <div class="status-controls">Replace Effect Details</div>
+            <div class="effect-controls">
+					<a class="effect-status-control" data-action="add"><i class="far fa-plus-square"></i></a>
+            </div>
+			</header>
+			<ol class="statuses-list">
+            {{#each data.statuses as |status i|}}
+            <li class="effect-status flexrow" data-status-id="{{status}}" data-index="{{i}}">
+					<div class="status-select">
+						<select class="refreshes" name="statuses.{{i}}" {{#unless (eq status "none")}}
+							{{#unless (contains status ../config.statusEffects "id")}} data-tooltip="{{status}}: {{localize 'DND4EUI.UnknownCondition.Tip'}}"
+							{{/unless}}
+						{{/unless}}
+						>
+							{{selectOptions ../config.statusEffects selected=status valueAttr="id" labelAttr="label" localize=true blank="none"}}
+							{{#unless (eq status "none")}}
+								{{#unless (contains status ../config.statusEffects "id")}}
+								<option value="{{status}}" selected>{{localize 'DND4EUI.UnknownCondition.Label'}}</option>
+								{{/unless}}
+							{{/unless}}
+						</select>
+					</div>
+					<button class="effect-status-control" data-action="copy-all"{{#unless (contains status ../config.statusEffects "id")}} disabled{{/unless}}>{{localize 'DND4EUI.All'}}
+					<button class="effect-status-control" data-action="copy-name"{{#unless (contains status ../config.statusEffects "id")}} disabled{{/unless}}>{{localize 'Name'}}</button>
+					<button class="effect-status-control" data-action="copy-icon"{{#unless (contains status ../config.statusEffects "id")}} disabled{{/unless}}>{{localize 'DND4EUI.Icon'}}</button>
+					<button class="effect-status-control" data-action="copy-desc"{{#unless (contains status ../config.statusEffects "id")}} disabled{{/unless}}>{{localize 'DND4EUI.Desc'}}</button>
+					<button class="effect-status-control" data-action="copy-mods"{{#unless (contains status ../config.statusEffects "id")}} disabled{{/unless}}>{{localize 'DND4EUI.Mods'}}</button>
+					<button class="effect-status-control" data-action="copy-cl-flags"{{log ../config.statusEffects}}{{log ../config.statusEffect}}{{#if (eq ../config.statusEffects ../config.statusEffect)}} hidden{{/if}}{{#unless (contains status ../config.statusEffects "id")}} disabled{{/unless}}>{{localize 'DND4EUI.ConditionLabFlags'}}</button>
+					<div class="effect-controls">
+						<a class="effect-status-control" data-action="delete"><i class="fas fa-trash"></i></a>
+					</div>
+            </li>
+            {{/each}}
+			</ol>
+			
+		  <br />
+		  
+		  <!-- Ongoing Damage instances attached to this effect-->
+		  <h3 class="subsection">{{ localize "DND4E.OngoingDamage" }} / {{localize "EFFECT.statusRegen"}}</h3>
+        <header class="effect-dot effects-header flexrow">
+            <div class="amount">{{ localize "DND4E.Value" }}</div>
+            <div class="type">{{ localize "DND4E.Type" }} ({{ localize "DND4EUI.HowSelectMultiple" }})</div>
+            <div class="effect-controls">
+                <a class="effect-dot-control" data-action="add"><i class="far fa-plus-square"></i></a>
+            </div>
+        </header>
+        <ol class="dots-list">
+            {{#each effect.flags.dnd4e.dots as |dot i|}}
+            <li class="effect-dot flexrow" data-index="{{i}}">
+                <div class="amount">
+                    <input type="text" name="flags.dnd4e.dots.{{i}}.amount" value="{{dot.amount}}"/>
+                </div>
+                <div class="type damage-type">
+						<div class="multiselect">
+							<label class="toggle" tabindex="-1">
+								<span class="damage-types-text" id="damage-types-text-{{i}}">
+								{{#each dot.typesArray as |type i|}}{{!--
+									--}}{{#unless (eq i 0)}}, {{/unless}}{{!--
+									--}}{{#if (eq type "healing")}}{{!--
+										--}}{{localize "EFFECT.statusRegen"}}{{!--
+									--}}{{else}}{{!--
+										--}}{{lookup ../../config.damageTypes type}}{{!--
+									--}}{{/if}}{{!--
+								--}}{{/each}}
+								</span>
+								<i class="fas fa-chevron-down"></i>
+								<i class="fas fa-chevron-up"></i>
+							</label>
+							<select name="flags.dnd4e.dots.{{i}}.typesArray"  class="damage-types-selection refreshes" id="damage-types-selection-{{i}}" size="13" multiple>
+								{{#each ../config.damageTypes as |name type|}}
+								{{#unless (eq type "ongoing")}}{{#unless (eq type "damage")}}
+								<option value="{{type}}" {{#if (contains type dot.typesArray)}}selected{{/if}}>{{name}}</option>
+								{{/unless}}{{/unless}}
+								{{/each}}
+								<option value="healing" {{#if (contains "healing" dot.typesArray)}}selected{{/if}}>[{{localize "EFFECT.statusRegen"}}]</option>
+								<option value="">&nbsp;</option>
+							</select>
+						</div>
+                </div>
+                <div class="effect-controls">
+                    <a class="effect-dot-control" data-action="delete"><i class="fas fa-trash"></i></a>
+                </div>
+            </li>
+            {{/each}}
+        </ol>
+
     </section>
 
     <footer class="sheet-footer">

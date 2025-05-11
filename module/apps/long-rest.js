@@ -4,9 +4,9 @@ export class LongRestDialog extends DocumentSheet4e {
 
 	static get defaultOptions() {
 		const options = super.defaultOptions;
-		return mergeObject(options, {
+		return foundry.utils.mergeObject(options, {
 			id: "long-rest",
-			classes: ["dnd4eBeta", "actor-rest"],
+			classes: ["dnd4e", "actor-rest"],
 			template: "systems/dnd4e/templates/apps/long-rest.html",
 			width: 500,
 			closeOnSubmit: true

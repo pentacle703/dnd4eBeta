@@ -4,16 +4,16 @@ export class SaveThrowDialog extends DocumentSheet4e {
 
 	static get defaultOptions() {
 		const options = super.defaultOptions;
-		return mergeObject(options, {
+		return foundry.utils.mergeObject(options, {
 			id: "save-throw",
-			classes: ["dnd4eBeta", "actor-save-throw"],
+			classes: ["dnd4e", "actor-save-throw"],
 			template: "systems/dnd4e/templates/apps/save-throw.html",
 			width: 500,
 			closeOnSubmit: true
 		});
 	}
 	get title() {
-		return `${this.object.name} - ${game.i18n.format("DND4EBETA.SavingThrow")}`;
+		return `${this.object.name} - ${game.i18n.format("DND4E.SavingThrow")}`;
 	}
 
 	/** @override */
@@ -22,7 +22,8 @@ export class SaveThrowDialog extends DocumentSheet4e {
 		return {
 			system: this.object.system,
 			rollModes: CONFIG.Dice.rollModes,
-			effectName: ( options.effectSave ? this.object.effects.get(options.effectId).name : null )
+			effectName: ( options.effectSave ? this.object.effects.get(options.effectId).name : null ),
+			saveDC: ( options.effectSave ? this.object.effects.get(options.effectId).flags.dnd4e?.effectData?.saveDC : null )
 		};
 	}
 
