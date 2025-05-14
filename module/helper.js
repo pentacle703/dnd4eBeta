@@ -976,10 +976,10 @@
 		if(chatData.powersource) tag.push(powerSource);
 
 		if(['melee', 'meleeRanged', 'ranged'].includes(chatData.weaponType) ) {
-			tag.push(game.i18n.localize("DND4EBETA.ItemTypeWeapon"));
+			tag.push(game.i18n.localize("DND4E.ItemTypeWeapon"));
 		} 
 		else if (chatData.weaponType === "implement") {
-			tag.push(game.i18n.localize("DND4EBETA.WeaponImplement"));
+			tag.push(game.i18n.localize("DND4E.WeaponImplement"));
 		}
 
 		if (chatData.powersource && chatData.secondPowersource && chatData.secondPowersource != chatData.powersource){
