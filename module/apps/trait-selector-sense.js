@@ -6,9 +6,9 @@ export default class TraitSelector extends FormApplication {
 
   /** @override */
 	static get defaultOptions() {
-	  return mergeObject(super.defaultOptions, {
+	  return foundry.utils.mergeObject(super.defaultOptions, {
 	    id: "trait-selector",
-      classes: ["dnd4eBeta"],
+      classes: ["dnd4e"],
       title: "Actor Trait Selection",
       template: "systems/dnd4e/templates/apps/trait-selector-sense.html",
       width: 320,
@@ -41,7 +41,7 @@ export default class TraitSelector extends FormApplication {
   getData() {
 	
     // Get current values
-    let attr = getProperty(this.object, this.attribute) || {};
+    let attr = foundry.utils.getProperty(this.object, this.attribute) || {};
     attr.value = attr.value || [];
 	
 	// Populate choices

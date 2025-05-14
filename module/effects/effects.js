@@ -4,12 +4,17 @@
  */
  export default class ActiveEffect4e extends ActiveEffect {
 	constructor(data, context) {
+		if(!data.flags?.dnd4e?.dots){
+			foundry.utils.setProperty(data, "flags.dnd4e.dots", new Array);	//Empty array for storing Ongoing Damage instances
+		}
 		if (data.id) {
-		  setProperty(data, "flags.core.statusId", data.id);
+		  foundry.utils.setProperty(data, "flags.core.statusId", data.id);
 		  delete data.id;
 		}
 		try{
-			if(context?.parent?.type === "power"){ //this will not work outside of try catch while initilising
+			
+			// if(context?.parent?.type === "power"){ //this will not work outside of try catch while initilising
+			if(["power", "consumable"].includes(context?.parent?.type)){
 				data.transfer = false;
 			}
 		} catch{
@@ -18,6 +23,20 @@
 		super(data, context);
 	}
 
+	/* --------------------------------------------- */
+	/**
+	 * Returns a HTML string for the active effect tool-tip
+	 * @type {string}
+	 */
+	get tooltip(){
+		let html = `<div class="effect-tooltip">`;
+		html += `<div><label class="name">${this.name}</label></div>`;
+		if(this._source.name) html += `<div><label class="source">${game.i18n.localize("DND4E.Source")}: ${this._source.name}</label></div>`;
+		if(this.duration.label) html += `<div><label class="duration">${game.i18n.localize("DND4E.Duration")}: ${this.duration.label}</label></div>`;
+		if(this.description) html += `<div class="description">${this.description}</div>`;
+		html += `</div>`
+		return html;
+	}
 	/**
 	 * Is this active effect currently suppressed?
 	 * @type {boolean}
@@ -28,6 +47,7 @@
 
 	/** @inheritdoc */
 	apply(actor, change) {
+
 		if ( this.isSuppressed ) return null;
 		
 		// this.otherActorLink(actor, change);
@@ -98,48 +118,45 @@
 	/** @inheritdoc */
 	async _preCreate(data, options, user) {
 		await super._preCreate(data, options, user);
+		const updates = {};
 
 		// Set initial duration data for Actor-owned effects
 		if ( this.parent instanceof Actor ) {
-			const updates = {duration: {startTime: game.time.worldTime}, transfer: false, equippedRec: false};
+			// const updates = {duration: {startTime: game.time.worldTime}, transfer: false, equippedRec: false};
+			updates.duration = {startTime: game.time.worldTime};
+			updates.transfer = false;
+			updates.equippedRec = false;
+
 			const combat = game.combat;
 			if (combat?.turn != null && combat.turns && combat.turns[combat.turn]) {//if combat has started - combat.turn for the first character = 0 (so cannot use truthy value).  If there are no combatents combat.turns = []
 				updates.flags = {dnd4e: { effectData: { startTurnInit: combat.turns[combat.turn].initiative ?? 0}}};
 			}
+		}
+
+		if(data.statuses?.length && data.description){
+			updates.description = game.i18n.localize(data.description);
+		}
+
+		if(Object.keys(updates).length){
 			this.updateSource(updates);
 		}
+
 	}
 	/* --------------------------------------------- */
 
 	/**
 	 * Determine whether this Active Effect is suppressed or not.
 	 */
-	 determineSuppression() {
+	determineSuppression() {
 		this.isSuppressed = false;
-
-		if ( this.disabled || (this.parent.documentName !== "Actor") ) return;
-
-		const [parentType, parentId, documentType, documentId] = this.origin?.split(".") ?? [];
-		const originArray = this.origin?.split(".");
-
-		// if ( (parentType !== "Actor") || (parentId !== this.parent.id) || (documentType !== "Item") ) return;
-
-		let indexItemID = originArray?.indexOf('Item') > 0 ? originArray.indexOf('Item') + 1 : -1;
-		if(indexItemID < 1){
-			return;
+		if ( this.parent instanceof CONFIG.Item.documentClass ){
+			//types of items that can be equipped
+			const validTypes = ["weapon", "equipment", "tool", "loot", "backpack"];
+			if(validTypes.includes(this.parent.type) && this.parent.system.equipped === false){
+				return this.isSuppressed = this.flags.dnd4e?.effectData?.equippedRec || false;
+			}
+			this.isSuppressed = this.areEffectsSuppressed;
 		}
-		// const item = this.parent.items.get(documentId);
-		const item = this.parent.items.get(originArray[indexItemID]);
-
-		if ( !item ) return;
-
-		//types of items that can be equipted
-		const validTypes = ["weapon", "equipment", "consumable", "tool", "loot", "backpack"];
-		if(validTypes.includes(item.type) && item.system.equipped === false){
-			this.isSuppressed = this.flags.dnd4e?.effectData?.equippedRec || false;
-			return;
-		}
-		this.isSuppressed = item.areEffectsSuppressed;
 	}
 
 	/* --------------------------------------------- */
@@ -154,12 +171,14 @@
 		event.preventDefault();
 		const a = event.currentTarget;
 		const li = a.closest("li");
-		const effect = li.dataset.effectId ? owner.effects.get(li.dataset.effectId) : null;
+		const effects = ["Player Character", "NPC"].includes(owner.type) ? owner.getActiveEffects() : owner.effects.contents;
+		const effect = li.dataset.effectId ? effects.find(e => e._id === li.dataset.effectId) : null;
 		switch ( a.dataset.action ) {
 			case "create":
+				const isActor = owner instanceof Actor;
 				return owner.createEmbeddedDocuments("ActiveEffect", [{
-					name: game.i18n.localize("DND4EBETA.EffectNew"),
-					icon: "icons/svg/aura.svg",
+					name: isActor ? game.i18n.localize("DND4E.EffectNew") : owner.name,
+					img: isActor ? "icons/svg/aura.svg" : owner.img,
 					origin: owner.uuid,
 					"duration.rounds": li.dataset.effectType === "temporary" ? 1 : undefined,
 					disabled: li.dataset.effectType === "inactive"
@@ -189,8 +208,7 @@
 	}
 
 	_prepareDuration(){
-		
-		if(this.parent.type === "power"){
+		if(["power", "consumable"].includes(this.parent?.type)){
 			const durationType = this.getFlag("dnd4e", "effectData")?.durationType;
 			if(durationType){
 				return{
@@ -250,10 +268,10 @@
 	_getDurationLabel(rounds, turns) {
 		const durationType = this.getFlag("dnd4e", "effectData")?.durationType;
 		if(durationType){
-			if(durationType === "endOfTargetTurn") return  game.i18n.localize("DND4EBETA.DurationEndOfTargetTurnSimp");
-			else if(durationType === "startOfTargetTurn")  return game.i18n.localize("DND4EBETA.DurationStartOfTargetTurnSimp");
+			if(durationType === "endOfTargetTurn") return  game.i18n.localize("DND4E.DurationEndOfTargetTurnSimp");
+			else if(durationType === "startOfTargetTurn")  return game.i18n.localize("DND4E.DurationStartOfTargetTurnSimp");
 
-			return CONFIG.DND4EBETA.durationType[durationType];
+			return game.i18n.localize(CONFIG.DND4E.durationType[durationType]);
 		}
 
 		return super._getDurationLabel(rounds, turns);
@@ -274,24 +292,24 @@
 		const categories = {
 			temporary: {
 				type: "temporary",
-				label: game.i18n.localize("DND4EBETA.EffectTemporary"),
+				label: game.i18n.localize("DND4E.EffectTemporary"),
 				effects: []
 			},
 			passive: {
 				type: "passive",
-				label: game.i18n.localize("DND4EBETA.EffectPassive"),
+				label: game.i18n.localize("DND4E.EffectPassive"),
 				effects: []
 			},
 			inactive: {
 				type: "inactive",
-				label: game.i18n.localize("DND4EBETA.EffectInactive"),
+				label: game.i18n.localize("DND4E.EffectInactive"),
 				effects: []
 			},
 			suppressed: {
 				type: "suppressed",
-				label: game.i18n.localize("DND4EBETA.EffectUnavailable"),
+				label: game.i18n.localize("DND4E.EffectUnavailable"),
 				effects: [],
-				info: [game.i18n.localize("DND4EBETA.EffectUnavailableInfo")]
+				info: [game.i18n.localize("DND4E.EffectUnavailableInfo")]
 			}
 		};
 
@@ -305,5 +323,25 @@
 
 		categories.suppressed.hidden = !categories.suppressed.effects.length;
 		return categories;
+	}
+	
+	/** Blatantly stolen from Black Flag: fix for core issue
+	*   https://github.com/foundryvtt/foundryvtt/issues/11527
+	*   Can be removed when the system goes V13-only
+	*/	
+	_applyUpgrade(actor, change, current, delta, changes){
+		if (current === null) return this._applyOverride(actor, change, current, delta, changes);
+		
+		let update;
+		const ct = foundry.utils.getType(current);
+		
+		switch (ct){
+			case "boolean":
+			case "number":
+				if (change.mode === CONST.ACTIVE_EFFECT_MODES.UPGRADE && delta > current) update = delta;
+				else if (change.mode === CONST.ACTIVE_EFFECT_MODES.DOWNGRADE && delta < current) update = delta;
+				break;
+		}
+		if (update !== undefined) changes[change.key] = update;
 	}
 }

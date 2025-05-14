@@ -1,13 +1,13 @@
-import DocumentSheet4e from "./DocumentSheet4e.js"
+﻿import DocumentSheet4e from "./DocumentSheet4e.js"
 
 export default class HPOptions extends DocumentSheet4e {
 
   /** @override */
 	static get defaultOptions() {
-		return mergeObject(super.defaultOptions, {
+		return foundry.utils.mergeObject(super.defaultOptions, {
 		id: "hp-options",
-		classes: ["dnd4eBeta"],
-		title: game.i18n.localize("DND4EBETA.HPOptions"),
+		classes: ["dnd4e"],
+		title: game.i18n.localize("DND4E.HPOptionsTitle"),
 		template: "systems/dnd4e/templates/apps/hp-options.html",
 		width: 340,
 		height: "auto",
