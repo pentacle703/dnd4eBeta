@@ -159,11 +159,12 @@ async function performD20RollAndCreateMessage(form, {parts, partsExpressionRepla
 		Object.keys(data.commonAttackBonuses).forEach(function(key,index) {
 			data[key] = data.commonAttackBonuses[key].value
 		});
+
 		const individualAttack = (Object.entries(form)[6][1].value === "true");
 		for (let targetIndex = 0; targetIndex < numberOfTargets; targetIndex++ ) {
 			const targetBonuses = []
 			for ( let [k, v] of Object.entries(form) ) {
-				if(v.checked) {
+				if(v.checked && ((!data.condRollBonuses )|| !data.condRollBonuses[v.name])  ) {
 					let tabIndex = v.name.split(".")[0];
 					if((individualAttack && parseInt(tabIndex) === targetIndex) // check if Individual Attack Bonuses
 					|| !individualAttack ) { //otherwise just use Unified Attack Bonuses
@@ -193,7 +194,7 @@ async function performD20RollAndCreateMessage(form, {parts, partsExpressionRepla
 		Object.keys(data.commonAttackBonuses).forEach(function(key,index) {
 			data[key] = data.commonAttackBonuses[key].value
 		});
-				
+		console.log(data);
 		const userStatBonuses = [];
 		// User conditions
 		if(userStatus.has('prone')) userStatBonuses.push('@prone');
@@ -404,6 +405,7 @@ export async function damageRoll({parts, partsCrit, partsMiss, partsExpressionRe
 	let dialogData = {
 		formula: "@damage + @bonus",
 		data: data,
+		isDamageRoll: true,
 		rollMode: rollMode,
 		rollModes: CONFIG.Dice.rollModes
 	};
@@ -481,7 +483,6 @@ async function performDamageRollAndCreateChatMessage(form, {parts, partsCrit, pa
 	} else {
 		if(!fastForward) parts.pop();
 	}
-	console.log(parts)
 
 	let roll;
 	if(hitType === 'normal'){
@@ -558,6 +559,15 @@ function manageBonusInParts(parts, form, data) {
 		}
 		else {
 			data['bonus'] = 0
+		}
+		for ( let [k, v] of Object.entries(form) ) {
+			if(v.checked && data.condRollBonuses[v.name]) {
+				let bonus = data.condRollBonuses[v.name].value.trim();
+				if(!bonus.startsWith("+") && !bonus.startsWith("-")){
+					bonus = "+"+bonus.trim();
+				}
+				data['bonus'] += bonus;
+			}
 		}
 	}
 	else {

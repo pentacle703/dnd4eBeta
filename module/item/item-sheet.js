@@ -135,7 +135,26 @@ export default class ItemSheet4e extends ItemSheet {
 		// Vehicles
 		data.isCrewed = itemData.system.activation?.type === 'crew';
 		data.isMountable = this._isItemMountable(itemData);
-	
+		
+		// Prepare conditional roll bonuses
+		data.condRollBonusesCategories =  [
+			{
+				"type":"attack",
+				"label": "attack"
+			},
+			{
+				"type":"damage",
+				"label":"damage"
+			},
+			{
+				"type":"skill",
+				"label":"skill"
+			},
+			{
+				"type":"other",
+				"label":"other"
+			}
+		];
 		// Prepare Active Effects
 		data.effects = ActiveEffect4e.prepareActiveEffectCategories(this.item.effects);
 
@@ -694,6 +713,9 @@ export default class ItemSheet4e extends ItemSheet {
 		const special = formData.system?.specialAdd;
 		if (special) special.parts = Object.values(special?.parts || {}).map(d => [d || ""]);
 
+		const rollBonuses = formData.system?.rollBonuses
+		if(rollBonuses) rollBonuses.parts = Object.values(rollBonuses?.parts || {});
+
 		// Update the Item
 		super._updateObject(event, formData);
 	}
@@ -718,8 +740,8 @@ export default class ItemSheet4e extends ItemSheet {
 			// 	if ( this.item.isOwned ) return ui.notifications.warn("Managing Active Effects within an Owned Item is not currently supported and will be added in a subsequent update.")
 			// 		ActiveEffect4e.onManageActiveEffect(event, this.item);
 			// });
+			html.find(".cond-roll-control").click(this._onManageCondRollBonus.bind(this));
 			html.find(".effect-control").click(event => { ActiveEffect4e.onManageActiveEffect(event, this.item);});
-
 
 			html.find('.powereffect-control').click(this._onPowerEffectControl.bind(this));
 		}
@@ -979,6 +1001,30 @@ export default class ItemSheet4e extends ItemSheet {
 			return this._onDropActiveEffect(event, data);
 		}
 
+	}
+
+	/**
+	 * Manage Active Effect instances through the Actor Sheet via effect control buttons.
+	 * @param {MouseEvent} event      The left-click event on the effect control
+	 * @param {Actor|Item} owner      The owning document which manages this effect
+	 * @returns {Promise|null}        Promise that resolves when the changes are complete.
+	 */
+	async _onManageCondRollBonus(event, owner) {
+		event.preventDefault();
+		const a = event.currentTarget;
+		const li = a.closest("li");
+		const rollBonuses = this.item.system.rollBonuses;
+		switch ( a.dataset.action ) {
+			case "create":
+				await this._onSubmit(event);  // Submit any unsaved changes
+				const updateValue = rollBonuses.parts.concat([{name:"",type:"attack",value:"1d6"}]);
+				return this.item.update({"system.rollBonuses.parts": updateValue});
+			case "delete":
+				const index = Number(li.dataset.bonId);
+				let newParts = duplicate(rollBonuses.parts);
+				newParts.splice(index,1);
+				return this.item.update({"system.rollBonuses.parts": newParts});
+		}
 	}
 
 	/* -------------------------------------------- */

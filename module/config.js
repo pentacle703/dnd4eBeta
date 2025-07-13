@@ -560,6 +560,13 @@ DND4E.commonAttackBonuses = {
 	running: {value: -5, label:"DND4E.CommonAttackRunning"},
 	squeez: {value: -5, label:"DND4E.CommonAttackSqueez"},
 }
+
+DND4E.commonDamageBonuses ={
+	Hex:{value:"+2d8", label:"Envoutement"},
+	SneakAttack:{value:"+3d8", label:"Attaque Sournoise"},
+	AnkleBitter:{value:"+1", label:"Coupe Jarret"},
+	AnkleBitterCrit:{value:"+1d6", label:"Coupe Jarret (Crit)"}
+}
 /* -------------------------------------------- */
 
 /**

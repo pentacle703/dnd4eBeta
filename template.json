@@ -1088,6 +1088,11 @@
 				"identified": true,
 				"container": null
 			},
+			"condRollBonuses":{
+				"rollBonuses":{
+					"parts":[]
+				}
+			},
 			"activatedEffect": {
 				"activation": {
 					"type": "",
@@ -1215,7 +1220,7 @@
 			}	
 		},
 		"classFeats": {
-			"templates": ["itemDescription", "itemMacro"],
+			"templates": ["itemDescription", "itemMacro", "condRollBonuses"],
 			"class": "",
 			"hitFistLevel": 10,
 			"hitPerLevel": 5,
@@ -1297,7 +1302,7 @@
 			"proficient": true
 		},
 		"feat": {
-			"templates": ["itemDescription", "activatedEffect", "itemMacro"],
+			"templates": ["itemDescription", "activatedEffect", "itemMacro", "condRollBonuses"],
 			"requirements": "",
 			"level": "",
 			"recharge": {
@@ -1361,17 +1366,17 @@
 			"critRangeImp": 20
 		},
 		"raceFeats": {
-			"templates": ["itemDescription", "activatedEffect", "itemMacro"],
+			"templates": ["itemDescription", "activatedEffect", "itemMacro", "condRollBonuses"],
 			"requirements": "",
 			"level": ""
 		},
 		"pathFeats": {
-			"templates": ["itemDescription", "activatedEffect", "itemMacro"],
+			"templates": ["itemDescription", "activatedEffect", "itemMacro", "condRollBonuses"],
 			"requirements": "",
 			"level": ""
 		},
 		"destinyFeats": {
-			"templates": ["itemDescription", "activatedEffect", "itemMacro"],
+			"templates": ["itemDescription", "activatedEffect", "itemMacro", "condRollBonuses"],
 			"requirements": "",
 			"level": ""
 		},

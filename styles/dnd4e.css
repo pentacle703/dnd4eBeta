@@ -1875,7 +1875,7 @@ font-size:12px;
 	flex-basis:114px;
 }
 .dnd4e.sheet .npc .sheet-header .summary-typeother{
-	flex-basis:calc(100% - 472px);
+	flex-basis:calc(100% - 500px);
 	flex-shrink:2;
 }
 .dnd4e.sheet .npc .sheet-header .summary-leader{
@@ -1894,7 +1894,7 @@ font-size:12px;
 	flex-basis:90px;
 }
 .dnd4e.sheet .sheet-header .summary-name-npc{
-	flex-basis:calc(100% - 380px);
+	flex-basis:calc(100% - 400px);
 }
 .dnd4e.sheet .npc  .sheet-header .summary-exp input{
 	width:75%;

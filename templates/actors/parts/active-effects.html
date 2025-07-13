@@ -49,7 +49,30 @@
 	<div name="con-bon-config" class="con-bon-config" href="#" data-tooltip="Configure common conditional modifiers for this character">Conditional Modifiers <i class="fas fa-edit"></i></div>
 	
 </div>
+{{#if system.rollBonuses}}
+<div class="cond-roll-bonus">
+	<h4 class="attribute-name box-title">{{localize 'DND4E.CondRollBonus'}}
+		<a class="cond-roll-control" data-action="create" data-tooltip="{{localize 'DND4E.EffectCreate'}}">
+			<i class="fas fa-plus">{{localize "DND4E.Add"}}</i> 
+		</a>
+	</h4>
+	<ol class="item-list cond-roll-list">
+		{{#each system.rollBonuses.parts as |bonus index|}}
+			<li class="item roll-bonus flexrow" data-bon-id="{{index}}">
+				<input type="text" name="system.rollBonuses.parts.{{index}}.name" value="{{lookup this 'name'}}"/>
+				<select name="system.rollBonuses.parts.{{index}}.type">
+				{{selectOptions ../condRollBonusesCategories selected=(lookup this 'type') nameAttr="type" labelAttr="label"}}
+				</select>
+				<input type="text" name="system.rollBonuses.parts.{{index}}.value" value="{{lookup this 'value'}}"/>
 
+				<a class="cond-roll-control" data-action="delete" data-tooltip="{{localize 'DND4E.EffectDelete'}}">
+					<i class="fas fa-trash"></i>
+				</a>
+			</li>
+		{{/each}}
+	</ol>
+</div>
+{{/if}}
 <div class="active-effects">
 	<h4 class="attribute-name box-title">{{localize 'DND4E.Effects'}}</h4>
 	<ol class="item-list effects-list">

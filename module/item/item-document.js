@@ -1229,6 +1229,7 @@ export default class Item4e extends Item {
 
 		rollData.isAttackRoll = true;
 		rollData.commonAttackBonuses = actorData.system.commonAttackBonuses;
+		rollData.condRollBonuses = actorData.getCondRollBonus("attack");
 		//console.debug(rollData.commonAttackBonuses);
 		rollData["ammo"] = 0 // because ammo is added to by weapon use multiple clicks of the button will add it higher
 
@@ -1462,6 +1463,8 @@ export default class Item4e extends Item {
 
 		// Get roll data
 		const rollData = this.getRollData({'variance':variance});
+		rollData.condRollBonuses = this.actor.getCondRollBonus("damage");
+
 		if ( spellLevel ) rollData.item.level = spellLevel;
 
 		// Get message labels
@@ -1520,7 +1523,7 @@ export default class Item4e extends Item {
 		if(!!itemData.hit?.formula) {
 			const formulaHelper = (formula) => {
 				// store the values that were used to sub in any formulas
-				options.formulaInnerData = foundry.utils.mergeObject(options.formulaInnerData, Helper.commonReplace(formula, actorData, this.system, weaponUse?.system, 1, true))
+				options.formulaInnerData = foundry.utils.mergeObject(options.formulaInnerData, Helper.commonReplace(formula, actorData, this.system, weaponUse?.system, 2, true))
 				// convert formula and type into a single string of "substituted formula [type]"
 				return  Helper.commonReplace(formula, actorData, this.system, weaponUse?.system);
 			}

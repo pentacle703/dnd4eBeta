@@ -1043,7 +1043,7 @@ export class Actor4e extends Actor {
 					def.armour += i.system.armour[id];
 				}
 				
-				if(data.advancedCals){			
+				/*if(data.advancedCals){			
 					let defBonusValue = 0;
 					if(!(def.bonus.length === 1 && jQuery.isEmptyObject(def.bonus[0]))) {
 						for( const b of def.bonus) {
@@ -1073,9 +1073,9 @@ export class Actor4e extends Actor {
 					}
 					
 					
-				} else {
+				} else {*/
 					def.value = def?.base || 0;
-				}
+				//}
 				def.value += Math.max(def.feat || 0, globalBonus.feat);
 				def.value += Math.max(def.item || 0, globalBonus.item);
 				def.value += Math.max(def.power || 0, globalBonus.power);
@@ -1394,6 +1394,14 @@ export class Actor4e extends Actor {
 			console.error(`Failed conditional bonus calc. (${e})`)
 		}
 		
+	}
+
+	getCondRollBonus(rollType){
+		const rollItems = this.items.filter(item => item.system.rollBonuses);
+		const allRollBonuses = rollItems.map(item => item.system.rollBonuses.parts);
+		let rolls = [];
+		allRollBonuses.forEach(rollBonuses => rolls = rolls.concat(rollBonuses.filter(roll => roll.type === rollType)));
+		return rolls;
 	}
 	
   /**

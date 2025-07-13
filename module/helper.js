@@ -1564,7 +1564,7 @@ Handlebars.registerHelper('contains', function(lunch, lunchbox, meal) {
 			return lunchbox.includes(lunch);
 		}
 		const lunchLocation = lunchbox.findIndex((x) => x[meal] == lunch);
-		if(lunchLocation > 0) return true;
+		if(lunchLocation >= 0) return true;
 		return false;
 	} catch(err) {
 		console.error("Contains helper spat up. Did you give it the right parameter types?");

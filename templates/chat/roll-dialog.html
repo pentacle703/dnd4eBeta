@@ -95,6 +95,21 @@
 		</div>
 		{{/each}}
 		{{/if}}
+		{{#if data.condRollBonuses.length}}
+		<h2 class="label">{{localize 'DND4E.CommonDamageBonuses'}}</h2>
+		
+		
+			<div class="form-group stacked">
+			{{#each data.condRollBonuses as | a b |}}
+				<div class="column">
+					<label class="rollable">
+						<input type="checkbox" name="{{b}}" data-dtype="Boolean" value="{{../checked}}"/>{{a.name}} ({{a.value}})
+					</label>
+				</div>
+			{{/each}}
+			</div>
+
+		{{/if}}
 	</div>
 
 
