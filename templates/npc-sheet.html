@@ -178,16 +178,6 @@
 								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.str.label }}">{{numberFormat system.abilities.str.modHalf decimals=0 sign=true}}</label>
 								{{/if}}
 							</div>
-							
-							<div class="ability--score" data-ability="dex">
-								<label class="ability-name rollable" data-tooltip="{{system.abilities.dex.label }}">{{localize 'DND4E.AbilDex'}}</label>
-								<input class="number ability-score" name="system.abilities.dex.value" data-dtype="Number" value="{{system.abilities.dex.value}}" onfocus="this.select()" placeholder="10"/>
-								{{#if system.halfLevelOptions}}
-								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.dex.label }}">{{numberFormat system.abilities.dex.mod decimals=0 sign=true}}</label>
-								{{else}}
-								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.dex.label }}">{{numberFormat system.abilities.dex.modHalf decimals=0 sign=true}}</label>
-								{{/if}}
-							</div>
 
 							<div class="ability--score" data-ability="con">
 								<label class="ability-name rollable" data-tooltip="{{system.abilities.con.label }}">{{localize 'DND4E.AbilCon'}}</label>
@@ -196,6 +186,16 @@
 								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.con.label }}">{{numberFormat system.abilities.con.mod decimals=0 sign=true}}</label>
 								{{else}}
 								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.con.label }}">{{numberFormat system.abilities.con.modHalf decimals=0 sign=true}}</label>
+								{{/if}}
+							</div>
+
+							<div class="ability--score" data-ability="dex">
+								<label class="ability-name rollable" data-tooltip="{{system.abilities.dex.label }}">{{localize 'DND4E.AbilDex'}}</label>
+								<input class="number ability-score" name="system.abilities.dex.value" data-dtype="Number" value="{{system.abilities.dex.value}}" onfocus="this.select()" placeholder="10"/>
+								{{#if system.halfLevelOptions}}
+								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.dex.label }}">{{numberFormat system.abilities.dex.mod decimals=0 sign=true}}</label>
+								{{else}}
+								<label class="attribute-display ability-mod-half" data-tooltip="{{system.abilities.dex.label }}">{{numberFormat system.abilities.dex.modHalf decimals=0 sign=true}}</label>
 								{{/if}}
 							</div>
 						</div>

@@ -15,9 +15,7 @@
 			{{#if item.system.chatFlavor}}
 				<p class="chat-flavour">{{{item.system.chatFlavor}}}</p>
 			{{else}}
-				{{#unless (eq actor.type "NPC")}}<!-- For NPCs, flavour text display shouldn't be conditional on the presence of flavour text, because almost all NPC powers lack flavour text -->
-					{{{system.description.value}}}
-				{{/unless}}
+				{{{system.description.value}}}
 			{{/if}}
 			
 			<div class="item-summary">
